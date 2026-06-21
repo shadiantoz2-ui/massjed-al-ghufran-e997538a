@@ -168,9 +168,14 @@ function StudentsPage() {
                     <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} />
                   </Field>
                 </div>
-                <Field label="عمل الأب">
-                  <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="عمل الأب">
+                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
+                  </Field>
+                  <Field label="المرحلة الدراسية">
+                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} />
+                  </Field>
+                </div>
                 <Field label="عنوان السكن">
                   <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </Field>
