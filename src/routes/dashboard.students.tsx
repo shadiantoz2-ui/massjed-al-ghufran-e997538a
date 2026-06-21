@@ -83,6 +83,7 @@ function StudentsPage() {
       address: s.address ?? "",
       father_job: s.father_job ?? "",
       birth_date: s.birth_date ?? "",
+      grade_level: s.grade_level ?? "",
     });
     setOpen(true);
   }
