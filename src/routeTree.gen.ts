@@ -16,6 +16,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as StudentStudentIdRouteImport } from './routes/student.$studentId'
 import { Route as DashboardTeachersRouteImport } from './routes/dashboard.teachers'
 import { Route as DashboardStudentsRouteImport } from './routes/dashboard.students'
+import { Route as DashboardReciteStudentIdRouteImport } from './routes/dashboard.recite.$studentId'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -52,6 +53,12 @@ const DashboardStudentsRoute = DashboardStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardReciteStudentIdRoute =
+  DashboardReciteStudentIdRouteImport.update({
+    id: '/recite/$studentId',
+    path: '/recite/$studentId',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/teachers': typeof DashboardTeachersRoute
   '/student/$studentId': typeof StudentStudentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/recite/$studentId': typeof DashboardReciteStudentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,6 +77,7 @@ export interface FileRoutesByTo {
   '/dashboard/teachers': typeof DashboardTeachersRoute
   '/student/$studentId': typeof StudentStudentIdRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/recite/$studentId': typeof DashboardReciteStudentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +88,7 @@ export interface FileRoutesById {
   '/dashboard/teachers': typeof DashboardTeachersRoute
   '/student/$studentId': typeof StudentStudentIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/recite/$studentId': typeof DashboardReciteStudentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
     | '/dashboard/teachers'
     | '/student/$studentId'
     | '/dashboard/'
+    | '/dashboard/recite/$studentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,6 +109,7 @@ export interface FileRouteTypes {
     | '/dashboard/teachers'
     | '/student/$studentId'
     | '/dashboard'
+    | '/dashboard/recite/$studentId'
   id:
     | '__root__'
     | '/'
@@ -107,6 +119,7 @@ export interface FileRouteTypes {
     | '/dashboard/teachers'
     | '/student/$studentId'
     | '/dashboard/'
+    | '/dashboard/recite/$studentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStudentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/recite/$studentId': {
+      id: '/dashboard/recite/$studentId'
+      path: '/recite/$studentId'
+      fullPath: '/dashboard/recite/$studentId'
+      preLoaderRoute: typeof DashboardReciteStudentIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
@@ -174,12 +194,14 @@ interface DashboardRouteChildren {
   DashboardStudentsRoute: typeof DashboardStudentsRoute
   DashboardTeachersRoute: typeof DashboardTeachersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardReciteStudentIdRoute: typeof DashboardReciteStudentIdRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardStudentsRoute: DashboardStudentsRoute,
   DashboardTeachersRoute: DashboardTeachersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardReciteStudentIdRoute: DashboardReciteStudentIdRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
