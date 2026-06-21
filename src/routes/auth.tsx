@@ -17,10 +17,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,26 +29,10 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("تم تسجيل الدخول");
-        navigate({ to: "/dashboard" });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + "/dashboard",
-            data: { full_name: fullName },
-          },
-        });
-        if (error) throw error;
-        toast.success("تم إنشاء الحساب");
-        // First-ever signup becomes admin via trigger. Try direct sign-in (email confirmation may be off).
-        const { error: e2 } = await supabase.auth.signInWithPassword({ email, password });
-        if (!e2) navigate({ to: "/dashboard" });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("تم تسجيل الدخول");
+      navigate({ to: "/dashboard" });
     } catch (err: any) {
       toast.error(err.message || "حدث خطأ");
     } finally {
@@ -68,17 +50,9 @@ function AuthPage() {
         <Card className="p-6">
           <div className="mb-5 flex items-center gap-2">
             <BookOpen className="size-6 text-primary" />
-            <h1 className="text-xl font-bold">
-              {mode === "signin" ? "دخول المعلمين" : "إنشاء حساب"}
-            </h1>
+            <h1 className="text-xl font-bold">دخول المعلمين</h1>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "signup" && (
-              <div>
-                <Label htmlFor="fullName">الاسم الكامل</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-              </div>
-            )}
             <div>
               <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input
@@ -103,28 +77,11 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "جاري..." : mode === "signin" ? "دخول" : "إنشاء حساب"}
+              {busy ? "جاري..." : "دخول"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? (
-              <>
-                ليس لديك حساب؟{" "}
-                <button onClick={() => setMode("signup")} className="font-medium text-primary hover:underline">
-                  إنشاء حساب
-                </button>
-              </>
-            ) : (
-              <>
-                لديك حساب؟{" "}
-                <button onClick={() => setMode("signin")} className="font-medium text-primary hover:underline">
-                  تسجيل الدخول
-                </button>
-              </>
-            )}
-          </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            ملاحظة: أول حساب يُسجَّل يصبح المدير تلقائياً.
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            الحسابات يتم إنشاؤها من قبل مدير النظام فقط.
           </p>
         </Card>
       </div>
