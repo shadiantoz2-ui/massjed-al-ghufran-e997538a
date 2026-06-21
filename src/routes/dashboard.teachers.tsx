@@ -107,7 +107,7 @@ function TeachersPage() {
     if (userId === user?.id) return toast.error("لا يمكنك إزالة دورك بنفسك");
     if (!confirm(`هل أنت متأكد من إزالة دور (${ROLE_LABELS[r]})؟`)) return;
     const { error } = await supabase
-      .from("user_roles").delete().eq("user_id", userId).eq("role", r);
+      .from("user_roles").delete().eq("user_id", userId).eq("role", r as any);
     if (error) return toast.error(error.message);
     toast.success("تم");
     load();
