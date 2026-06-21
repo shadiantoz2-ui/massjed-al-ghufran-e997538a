@@ -61,7 +61,7 @@ function Home() {
     const { data: settings } = await supabase
       .from("app_settings").select("current_academic_year").eq("id", 1).maybeSingle();
     setYear(settings?.current_academic_year ?? null);
-    setRecitationsCount(0);
+    
   }
 
   return (
