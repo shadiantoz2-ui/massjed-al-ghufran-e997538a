@@ -125,9 +125,10 @@ function StudentsPage() {
     load();
   }
 
-  const filtered = students.filter((s) =>
-    s.full_name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filtered = students.filter((s) => {
+    const triple = `${s.full_name} ${s.father_name ?? ""}`.toLowerCase();
+    return triple.includes(query.toLowerCase());
+  });
 
   return (
     <div className="space-y-4">
