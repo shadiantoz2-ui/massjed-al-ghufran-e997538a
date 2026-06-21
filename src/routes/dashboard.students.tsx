@@ -34,6 +34,7 @@ interface Student {
   address: string | null;
   father_job: string | null;
   birth_date: string | null;
+  grade_level: string | null;
 }
 
 const EMPTY: Omit<Student, "id"> = {
@@ -46,6 +47,7 @@ const EMPTY: Omit<Student, "id"> = {
   address: "",
   father_job: "",
   birth_date: "",
+  grade_level: "",
 };
 
 function StudentsPage() {
