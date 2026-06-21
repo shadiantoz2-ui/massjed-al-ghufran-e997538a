@@ -101,6 +101,7 @@ function StudentsPage() {
       mother_phone: form.mother_phone || null,
       address: form.address || null,
       father_job: form.father_job || null,
+      grade_level: form.grade_level || null,
     };
     if (editing) {
       const { error } = await supabase.from("students").update(payload).eq("id", editing.id);
