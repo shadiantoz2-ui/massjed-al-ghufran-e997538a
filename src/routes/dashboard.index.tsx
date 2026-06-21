@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { GraduationCap, BookMarked, CalendarClock, Search } from "lucide-react";
+import { GraduationCap, CalendarClock, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
