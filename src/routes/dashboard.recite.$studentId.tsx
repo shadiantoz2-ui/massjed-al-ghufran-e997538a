@@ -16,9 +16,10 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth, canEditAnyRecitation } from "@/lib/auth-context";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
-import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz } from "@/lib/quran-data";
+import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
 import { toast } from "sonner";
-import { ArrowRight, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, Pencil, Trash2, Plus, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
@@ -46,23 +47,33 @@ function RecitePage() {
   const [recs, setRecs] = useState<FullRecitation[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // single edit dialog
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FullRecitation | null>(null);
   const [kind, setKind] = useState<"page" | "surah">("page");
   const [pageNum, setPageNum] = useState<number | "">("");
   const [surahNum, setSurahNum] = useState<number | "">("");
-  const [fromAyah, setFromAyah] = useState<number | "">("");
-  const [toAyah, setToAyah] = useState<number | "">("");
   const [grade, setGrade] = useState<string>("excellent");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
 
+  // bulk add dialog
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkTab, setBulkTab] = useState<"pages" | "surahs">("pages");
+  const [fromPage, setFromPage] = useState<number | "">("");
+  const [toPage, setToPage] = useState<number | "">("");
+  const [selectedSurahs, setSelectedSurahs] = useState<Set<number>>(new Set());
+  const [bulkGrade, setBulkGrade] = useState("excellent");
+  const [bulkNotes, setBulkNotes] = useState("");
+  const [bulkDate, setBulkDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [saving, setSaving] = useState(false);
+
   async function load() {
     const [{ data: s }, { data: r }] = await Promise.all([
-      supabase.from("students").select("full_name").eq("id", studentId).maybeSingle(),
+      supabase.from("students").select("full_name, father_name").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
     ]);
-    setName(s?.full_name ?? "");
+    setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}` : "");
     setRecs((r ?? []) as FullRecitation[]);
     setLoading(false);
   }
@@ -73,7 +84,6 @@ function RecitePage() {
     setKind(prefill?.kind ?? "page");
     setPageNum(prefill?.page ?? "");
     setSurahNum(prefill?.surah ?? "");
-    setFromAyah(""); setToAyah("");
     setGrade("excellent");
     setNotes("");
     setDate(new Date().toISOString().slice(0, 10));
@@ -84,8 +94,6 @@ function RecitePage() {
     setKind(r.kind);
     setPageNum(r.page_number ?? "");
     setSurahNum(r.surah_number ?? "");
-    setFromAyah(r.from_ayah ?? "");
-    setToAyah(r.to_ayah ?? "");
     setGrade(r.grade ?? "excellent");
     setNotes(r.notes ?? "");
     setDate(r.recitation_date);
@@ -103,8 +111,8 @@ function RecitePage() {
       kind,
       page_number: kind === "page" ? Number(pageNum) : null,
       surah_number: kind === "surah" ? Number(surahNum) : null,
-      from_ayah: kind === "surah" && fromAyah ? Number(fromAyah) : null,
-      to_ayah: kind === "surah" && toAyah ? Number(toAyah) : null,
+      from_ayah: null,
+      to_ayah: null,
       grade,
       notes: notes || null,
       recitation_date: date,
@@ -119,6 +127,75 @@ function RecitePage() {
       toast.success("تم تسجيل التسميع");
     }
     setOpen(false);
+    load();
+  }
+
+  function openBulk() {
+    setBulkTab("pages");
+    setFromPage("");
+    setToPage("");
+    setSelectedSurahs(new Set());
+    setBulkGrade("excellent");
+    setBulkNotes("");
+    setBulkDate(new Date().toISOString().slice(0, 10));
+    setBulkOpen(true);
+  }
+
+  function toggleSurah(n: number) {
+    setSelectedSurahs((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+  }
+
+  async function saveBulk(e: React.FormEvent) {
+    e.preventDefault();
+    const rows: any[] = [];
+    if (bulkTab === "pages") {
+      const f = Number(fromPage);
+      const t = Number(toPage);
+      if (!f || !t || f < 1 || t > TOTAL_PAGES || f > t) {
+        return toast.error(`أدخل نطاق صفحات صحيح (1 - ${TOTAL_PAGES})`);
+      }
+      for (let p = f; p <= t; p++) {
+        rows.push({
+          student_id: studentId,
+          teacher_id: user!.id,
+          kind: "page",
+          page_number: p,
+          surah_number: null,
+          from_ayah: null,
+          to_ayah: null,
+          grade: bulkGrade,
+          notes: bulkNotes || null,
+          recitation_date: bulkDate,
+        });
+      }
+    } else {
+      if (selectedSurahs.size === 0) return toast.error("اختر سورة واحدة على الأقل");
+      for (const n of selectedSurahs) {
+        rows.push({
+          student_id: studentId,
+          teacher_id: user!.id,
+          kind: "surah",
+          page_number: null,
+          surah_number: n,
+          from_ayah: null,
+          to_ayah: null,
+          grade: bulkGrade,
+          notes: bulkNotes || null,
+          recitation_date: bulkDate,
+        });
+      }
+    }
+    setSaving(true);
+    const { error } = await supabase.from("recitations").insert(rows);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(`تم تسجيل ${rows.length} تسميع`);
+    setBulkOpen(false);
     load();
   }
 
@@ -138,9 +215,15 @@ function RecitePage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm"><Link to="/dashboard/students"><ArrowRight className="size-4" /> الطلاب</Link></Button>
-        <h1 className="text-xl font-bold">{name}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="sm"><Link to="/dashboard/students"><ArrowRight className="size-4" /> الطلاب</Link></Button>
+          <h1 className="text-xl font-bold">{name}</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={openBulk} variant="default"><Layers className="size-4" /> إضافة مجموعة تسميعات</Button>
+          <Button onClick={() => openNew()} variant="outline"><Plus className="size-4" /> تسميع واحد</Button>
+        </div>
       </div>
 
       <Tabs defaultValue="grid">
@@ -164,9 +247,6 @@ function RecitePage() {
 
         <TabsContent value="list">
           <Card className="p-5">
-            <div className="mb-3 flex justify-end">
-              <Button onClick={() => openNew()}>+ تسميع جديد</Button>
-            </div>
             {recs.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">لا توجد تسميعات.</p>
             ) : (
@@ -177,9 +257,7 @@ function RecitePage() {
                       <div className="font-semibold">
                         {r.kind === "page"
                           ? `صفحة ${r.page_number} (الجزء ${pageToJuz(r.page_number!)})`
-                          : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}${
-                              r.from_ayah && r.to_ayah ? ` (${r.from_ayah}-${r.to_ayah})` : ""
-                            }`}
+                          : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}`}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {r.recitation_date} • {r.grade ? GRADE_LABELS[r.grade] : ""}
@@ -205,6 +283,7 @@ function RecitePage() {
         </TabsContent>
       </Tabs>
 
+      {/* Single recitation dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent dir="rtl">
           <DialogHeader>
@@ -228,31 +307,17 @@ function RecitePage() {
                   onChange={(e) => setPageNum(e.target.value ? Number(e.target.value) : "")} required />
               </div>
             ) : (
-              <>
-                <div>
-                  <Label>السورة</Label>
-                  <Select value={String(surahNum)} onValueChange={(v) => setSurahNum(Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="اختر سورة" /></SelectTrigger>
-                    <SelectContent>
-                      {JUZ_30_SURAHS.map((s) => (
-                        <SelectItem key={s.number} value={String(s.number)}>سورة {s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>من آية</Label>
-                    <Input type="number" min={1} value={fromAyah}
-                      onChange={(e) => setFromAyah(e.target.value ? Number(e.target.value) : "")} />
-                  </div>
-                  <div>
-                    <Label>إلى آية</Label>
-                    <Input type="number" min={1} value={toAyah}
-                      onChange={(e) => setToAyah(e.target.value ? Number(e.target.value) : "")} />
-                  </div>
-                </div>
-              </>
+              <div>
+                <Label>السورة</Label>
+                <Select value={String(surahNum)} onValueChange={(v) => setSurahNum(Number(v))}>
+                  <SelectTrigger><SelectValue placeholder="اختر سورة" /></SelectTrigger>
+                  <SelectContent>
+                    {JUZ_30_SURAHS.map((s) => (
+                      <SelectItem key={s.number} value={String(s.number)}>سورة {s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -277,6 +342,98 @@ function RecitePage() {
             </div>
             <DialogFooter>
               <Button type="submit">{editing ? "حفظ" : "تسجيل"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk add dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent dir="rtl" className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>إضافة مجموعة تسميعات</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={saveBulk} className="space-y-4">
+            <Tabs value={bulkTab} onValueChange={(v) => setBulkTab(v as any)}>
+              <TabsList className="w-full">
+                <TabsTrigger value="pages" className="flex-1">نطاق صفحات</TabsTrigger>
+                <TabsTrigger value="surahs" className="flex-1">سور جزء عمَّ</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pages" className="space-y-3 pt-3">
+                <p className="text-sm text-muted-foreground">
+                  أدخل من صفحة كذا إلى صفحة كذا، وسيتم تسجيل كل صفحة في النطاق كتسميع.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>من صفحة</Label>
+                    <Input type="number" min={1} max={TOTAL_PAGES} value={fromPage}
+                      onChange={(e) => setFromPage(e.target.value ? Number(e.target.value) : "")} />
+                  </div>
+                  <div>
+                    <Label>إلى صفحة</Label>
+                    <Input type="number" min={1} max={TOTAL_PAGES} value={toPage}
+                      onChange={(e) => setToPage(e.target.value ? Number(e.target.value) : "")} />
+                  </div>
+                </div>
+                {fromPage && toPage && Number(toPage) >= Number(fromPage) && (
+                  <p className="text-xs text-muted-foreground">
+                    سيتم تسجيل {Number(toPage) - Number(fromPage) + 1} صفحة.
+                  </p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="surahs" className="space-y-3 pt-3">
+                <p className="text-sm text-muted-foreground">اختر السور التي قام بتسميعها (يمكن اختيار أكثر من سورة).</p>
+                <div className="grid max-h-64 grid-cols-2 gap-1.5 overflow-y-auto rounded-md border p-2 sm:grid-cols-3">
+                  {JUZ_30_SURAHS.map((s) => {
+                    const checked = selectedSurahs.has(s.number);
+                    return (
+                      <button
+                        type="button"
+                        key={s.number}
+                        onClick={() => toggleSurah(s.number)}
+                        className={cn(
+                          "rounded-md border px-2 py-1.5 text-right text-sm transition",
+                          checked
+                            ? "bg-recited text-recited-foreground border-recited"
+                            : "bg-card hover:bg-accent",
+                        )}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedSurahs.size > 0 && (
+                  <p className="text-xs text-muted-foreground">{selectedSurahs.size} سورة محددة.</p>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>التاريخ</Label>
+                <Input type="date" value={bulkDate} onChange={(e) => setBulkDate(e.target.value)} required />
+              </div>
+              <div>
+                <Label>التقييم</Label>
+                <Select value={bulkGrade} onValueChange={setBulkGrade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(GRADE_LABELS).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>ملاحظات (تُطبَّق على كل التسميعات)</Label>
+              <Textarea rows={2} value={bulkNotes} onChange={(e) => setBulkNotes(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saving}>{saving ? "جاري الحفظ..." : "تسجيل الكل"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

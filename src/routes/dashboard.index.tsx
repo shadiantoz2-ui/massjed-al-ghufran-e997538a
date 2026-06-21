@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { GraduationCap, BookMarked, CalendarClock, Search } from "lucide-react";
+import { GraduationCap, CalendarClock, Search } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
@@ -25,7 +25,6 @@ function DashboardHome() {
 function Home() {
   const { roles } = useAuth();
   const [studentsCount, setStudentsCount] = useState<number | null>(null);
-  const [recitationsCount, setRecitationsCount] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; full_name: string }[]>([]);
@@ -33,13 +32,11 @@ function Home() {
 
   useEffect(() => {
     (async () => {
-      const [{ count: sc }, { count: rc }, { data: settings }] = await Promise.all([
+      const [{ count: sc }, { data: settings }] = await Promise.all([
         supabase.from("students").select("id", { count: "exact", head: true }),
-        supabase.from("recitations").select("id", { count: "exact", head: true }).eq("archived", false),
         supabase.from("app_settings").select("current_academic_year").eq("id", 1).maybeSingle(),
       ]);
       setStudentsCount(sc ?? 0);
-      setRecitationsCount(rc ?? 0);
       setYear(settings?.current_academic_year ?? null);
     })();
   }, []);
@@ -64,14 +61,13 @@ function Home() {
     const { data: settings } = await supabase
       .from("app_settings").select("current_academic_year").eq("id", 1).maybeSingle();
     setYear(settings?.current_academic_year ?? null);
-    setRecitationsCount(0);
+    
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <StatCard icon={GraduationCap} label="عدد الطلاب" value={studentsCount} />
-        <StatCard icon={BookMarked} label="تسميعات السنة الحالية" value={recitationsCount} />
         <StatCard icon={CalendarClock} label="السنة الدراسية" value={year} />
       </div>
 

@@ -34,6 +34,7 @@ interface Student {
   address: string | null;
   father_job: string | null;
   birth_date: string | null;
+  grade_level: string | null;
 }
 
 const EMPTY: Omit<Student, "id"> = {
@@ -46,6 +47,7 @@ const EMPTY: Omit<Student, "id"> = {
   address: "",
   father_job: "",
   birth_date: "",
+  grade_level: "",
 };
 
 function StudentsPage() {
@@ -81,6 +83,7 @@ function StudentsPage() {
       address: s.address ?? "",
       father_job: s.father_job ?? "",
       birth_date: s.birth_date ?? "",
+      grade_level: s.grade_level ?? "",
     });
     setOpen(true);
   }
@@ -98,6 +101,7 @@ function StudentsPage() {
       mother_phone: form.mother_phone || null,
       address: form.address || null,
       father_job: form.father_job || null,
+      grade_level: form.grade_level || null,
     };
     if (editing) {
       const { error } = await supabase.from("students").update(payload).eq("id", editing.id);
@@ -121,9 +125,10 @@ function StudentsPage() {
     load();
   }
 
-  const filtered = students.filter((s) =>
-    s.full_name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filtered = students.filter((s) => {
+    const triple = `${s.full_name} ${s.father_name ?? ""}`.toLowerCase();
+    return triple.includes(query.toLowerCase());
+  });
 
   return (
     <div className="space-y-4">
@@ -164,9 +169,14 @@ function StudentsPage() {
                     <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} />
                   </Field>
                 </div>
-                <Field label="عمل الأب">
-                  <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="عمل الأب">
+                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
+                  </Field>
+                  <Field label="المرحلة الدراسية">
+                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} />
+                  </Field>
+                </div>
                 <Field label="عنوان السكن">
                   <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </Field>
@@ -186,8 +196,8 @@ function StudentsPage() {
           <Card key={s.id} className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold">{s.full_name}</h3>
-                {s.father_name && <p className="text-xs text-muted-foreground">والد: {s.father_name}</p>}
+                <h3 className="font-bold">{s.full_name}{s.father_name ? ` ${s.father_name}` : ""}</h3>
+                {s.grade_level && <p className="text-xs text-muted-foreground">المرحلة: {s.grade_level}</p>}
                 {s.birth_date && <p className="text-xs text-muted-foreground">مواليد: {s.birth_date}</p>}
               </div>
             </div>

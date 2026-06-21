@@ -122,6 +122,7 @@ export type Database = {
           father_name: string | null
           father_phone: string | null
           full_name: string
+          grade_level: string | null
           id: string
           mother_name: string | null
           mother_phone: string | null
@@ -136,6 +137,7 @@ export type Database = {
           father_name?: string | null
           father_phone?: string | null
           full_name: string
+          grade_level?: string | null
           id?: string
           mother_name?: string | null
           mother_phone?: string | null
@@ -150,6 +152,7 @@ export type Database = {
           father_name?: string | null
           father_phone?: string | null
           full_name?: string
+          grade_level?: string | null
           id?: string
           mother_name?: string | null
           mother_phone?: string | null
