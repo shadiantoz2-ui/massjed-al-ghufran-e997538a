@@ -77,6 +77,7 @@ function StudentsPage() {
     setEditing(s);
     setForm({
       full_name: s.full_name,
+      nickname: s.nickname ?? "",
       father_name: s.father_name ?? "",
       mother_name: s.mother_name ?? "",
       student_phone: s.student_phone ?? "",
