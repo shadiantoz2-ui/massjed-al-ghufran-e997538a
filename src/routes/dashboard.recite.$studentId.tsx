@@ -221,8 +221,7 @@ function RecitePage() {
           <h1 className="text-xl font-bold">{name}</h1>
         </div>
         <div className="flex gap-2">
-          <Button onClick={openBulk} variant="default"><Layers className="size-4" /> إضافة مجموعة تسميعات</Button>
-          <Button onClick={() => openNew()} variant="outline"><Plus className="size-4" /> تسميع واحد</Button>
+          <Button onClick={openBulk} variant="default"><Layers className="size-4" /> إضافة تسميعات</Button>
         </div>
       </div>
 

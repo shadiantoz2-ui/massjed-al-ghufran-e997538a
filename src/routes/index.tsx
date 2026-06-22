@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search, BookOpen, LogIn } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,12 +52,15 @@ function Index() {
               <div className="text-xs text-muted-foreground leading-tight">منصة تسميعات القرآن</div>
             </div>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/auth">
-              <LogIn className="size-4" />
-              دخول المعلمين
-            </Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Button asChild variant="outline" size="sm">
+              <Link to="/auth">
+                <LogIn className="size-4" />
+                دخول المعلمين
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
