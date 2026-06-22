@@ -26,6 +26,7 @@ export const Route = createFileRoute("/dashboard/students")({
 interface Student {
   id: string;
   full_name: string;
+  nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
   student_phone: string | null;
@@ -39,6 +40,7 @@ interface Student {
 
 const EMPTY: Omit<Student, "id"> = {
   full_name: "",
+  nickname: "",
   father_name: "",
   mother_name: "",
   student_phone: "",
@@ -75,6 +77,7 @@ function StudentsPage() {
     setEditing(s);
     setForm({
       full_name: s.full_name,
+      nickname: s.nickname ?? "",
       father_name: s.father_name ?? "",
       mother_name: s.mother_name ?? "",
       student_phone: s.student_phone ?? "",
@@ -94,6 +97,7 @@ function StudentsPage() {
     const payload = {
       ...form,
       birth_date: form.birth_date || null,
+      nickname: form.nickname || null,
       father_name: form.father_name || null,
       mother_name: form.mother_name || null,
       student_phone: form.student_phone || null,
@@ -126,7 +130,7 @@ function StudentsPage() {
   }
 
   const filtered = students.filter((s) => {
-    const triple = `${s.full_name} ${s.father_name ?? ""}`.toLowerCase();
+    const triple = `${s.full_name} ${s.nickname ?? ""} ${s.father_name ?? ""}`.toLowerCase();
     return triple.includes(query.toLowerCase());
   });
 
@@ -144,9 +148,14 @@ function StudentsPage() {
                 <DialogTitle>{editing ? "تعديل بيانات طالب" : "طالب جديد"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={save} className="space-y-3">
-                <Field label="اسم الطالب *">
-                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="اسم الطالب *">
+                    <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                  </Field>
+                  <Field label="كنية الطالب">
+                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+                  </Field>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="اسم الأب">
                     <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} />
@@ -196,7 +205,7 @@ function StudentsPage() {
           <Card key={s.id} className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold">{s.full_name}{s.father_name ? ` ${s.father_name}` : ""}</h3>
+                <h3 className="font-bold">{s.full_name}{s.nickname ? ` ${s.nickname}` : ""}{s.father_name ? ` ${s.father_name}` : ""}</h3>
                 {s.grade_level && <p className="text-xs text-muted-foreground">المرحلة: {s.grade_level}</p>}
                 {s.birth_date && <p className="text-xs text-muted-foreground">مواليد: {s.birth_date}</p>}
               </div>
