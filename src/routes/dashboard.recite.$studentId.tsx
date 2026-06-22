@@ -105,6 +105,23 @@ function RecitePage() {
     if (kind === "page" && !pageNum) return toast.error("اختر رقم الصفحة");
     if (kind === "surah" && !surahNum) return toast.error("اختر السورة");
 
+    // Duplicate check (current year, not archived) — skip when editing
+    if (!editing) {
+      const dup = recs.find(
+        (r) => !r.archived && r.kind === kind &&
+          (kind === "page" ? r.page_number === Number(pageNum) : r.surah_number === Number(surahNum)),
+      );
+      if (dup) {
+        toast.warning(
+          kind === "page"
+            ? `الصفحة ${pageNum} مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`
+            : `هذه السورة مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`,
+        );
+        setOpen(false);
+        return;
+      }
+    }
+
     const payload: any = {
       student_id: studentId,
       teacher_id: user!.id,
@@ -153,6 +170,10 @@ function RecitePage() {
   async function saveBulk(e: React.FormEvent) {
     e.preventDefault();
     const rows: any[] = [];
+    const existingPages = new Set(recs.filter((r) => !r.archived && r.kind === "page").map((r) => r.page_number));
+    const existingSurahs = new Set(recs.filter((r) => !r.archived && r.kind === "surah").map((r) => r.surah_number));
+    const duplicates: string[] = [];
+
     if (bulkTab === "pages") {
       const f = Number(fromPage);
       const t = Number(toPage);
@@ -160,36 +181,40 @@ function RecitePage() {
         return toast.error(`أدخل نطاق صفحات صحيح (1 - ${TOTAL_PAGES})`);
       }
       for (let p = f; p <= t; p++) {
+        if (existingPages.has(p)) { duplicates.push(`صفحة ${p}`); continue; }
         rows.push({
-          student_id: studentId,
-          teacher_id: user!.id,
-          kind: "page",
-          page_number: p,
-          surah_number: null,
-          from_ayah: null,
-          to_ayah: null,
-          grade: bulkGrade,
-          notes: bulkNotes || null,
-          recitation_date: bulkDate,
+          student_id: studentId, teacher_id: user!.id, kind: "page",
+          page_number: p, surah_number: null, from_ayah: null, to_ayah: null,
+          grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
         });
       }
     } else {
       if (selectedSurahs.size === 0) return toast.error("اختر سورة واحدة على الأقل");
       for (const n of selectedSurahs) {
+        if (existingSurahs.has(n)) {
+          const s = JUZ_30_SURAHS.find((x) => x.number === n);
+          duplicates.push(`سورة ${s?.name ?? n}`);
+          continue;
+        }
         rows.push({
-          student_id: studentId,
-          teacher_id: user!.id,
-          kind: "surah",
-          page_number: null,
-          surah_number: n,
-          from_ayah: null,
-          to_ayah: null,
-          grade: bulkGrade,
-          notes: bulkNotes || null,
-          recitation_date: bulkDate,
+          student_id: studentId, teacher_id: user!.id, kind: "surah",
+          page_number: null, surah_number: n, from_ayah: null, to_ayah: null,
+          grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
         });
       }
     }
+
+    if (duplicates.length > 0) {
+      toast.warning(
+        `تم تجاهل ${duplicates.length} تسميع مكرر: ${duplicates.slice(0, 5).join("، ")}${duplicates.length > 5 ? "..." : ""}`,
+      );
+    }
+    if (rows.length === 0) {
+      if (duplicates.length === 0) toast.error("لا يوجد ما يُضاف");
+      setBulkOpen(false);
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase.from("recitations").insert(rows);
     setSaving(false);
