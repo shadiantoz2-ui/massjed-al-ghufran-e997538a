@@ -70,10 +70,10 @@ function RecitePage() {
 
   async function load() {
     const [{ data: s }, { data: r }] = await Promise.all([
-      supabase.from("students").select("full_name, father_name").eq("id", studentId).maybeSingle(),
+      supabase.from("students").select("full_name, nickname, father_name").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
     ]);
-    setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}` : "");
+    setName(s ? `${s.full_name}${s.nickname ? ` ${s.nickname}` : ""}${s.father_name ? ` ${s.father_name}` : ""}` : "");
     setRecs((r ?? []) as FullRecitation[]);
     setLoading(false);
   }
