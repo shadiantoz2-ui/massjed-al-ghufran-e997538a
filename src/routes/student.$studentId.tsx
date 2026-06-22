@@ -165,6 +165,7 @@ function StudentView() {
             <div className="rounded-lg border bg-card p-4 text-sm">
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <InfoRow label="اسم الطالب" value={info.full_name} />
+                <InfoRow label="كنية الطالب" value={info.nickname} />
                 <InfoRow label="اسم الأب" value={info.father_name} />
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
