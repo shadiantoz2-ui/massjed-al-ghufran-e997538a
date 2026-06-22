@@ -148,9 +148,14 @@ function StudentsPage() {
                 <DialogTitle>{editing ? "تعديل بيانات طالب" : "طالب جديد"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={save} className="space-y-3">
-                <Field label="اسم الطالب *">
-                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="اسم الطالب *">
+                    <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                  </Field>
+                  <Field label="كنية الطالب">
+                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+                  </Field>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="اسم الأب">
                     <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} />
