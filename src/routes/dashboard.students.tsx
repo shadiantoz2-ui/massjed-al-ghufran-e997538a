@@ -26,6 +26,7 @@ export const Route = createFileRoute("/dashboard/students")({
 interface Student {
   id: string;
   full_name: string;
+  nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
   student_phone: string | null;
@@ -39,6 +40,7 @@ interface Student {
 
 const EMPTY: Omit<Student, "id"> = {
   full_name: "",
+  nickname: "",
   father_name: "",
   mother_name: "",
   student_phone: "",
