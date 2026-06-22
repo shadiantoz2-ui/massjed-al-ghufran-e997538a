@@ -130,7 +130,7 @@ function StudentsPage() {
   }
 
   const filtered = students.filter((s) => {
-    const triple = `${s.full_name} ${s.father_name ?? ""}`.toLowerCase();
+    const triple = `${s.full_name} ${s.nickname ?? ""} ${s.father_name ?? ""}`.toLowerCase();
     return triple.includes(query.toLowerCase());
   });
 
