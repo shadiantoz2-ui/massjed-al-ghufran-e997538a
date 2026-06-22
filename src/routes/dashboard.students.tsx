@@ -97,6 +97,7 @@ function StudentsPage() {
     const payload = {
       ...form,
       birth_date: form.birth_date || null,
+      nickname: form.nickname || null,
       father_name: form.father_name || null,
       mother_name: form.mother_name || null,
       student_phone: form.student_phone || null,
