@@ -18,7 +18,7 @@ import { useAuth, canEditAnyRecitation } from "@/lib/auth-context";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
 import { toast } from "sonner";
-import { ArrowRight, Pencil, Trash2, Plus, Layers } from "lucide-react";
+import { ArrowRight, Pencil, Trash2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
