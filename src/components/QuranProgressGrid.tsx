@@ -61,7 +61,7 @@ export function QuranProgressGrid({ recitations, onPageClick, onSurahClick }: Pr
                 {startPage}–{endPage}
               </span>
             </header>
-            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
+            <div className="grid grid-cols-7 gap-1 sm:grid-cols-14">
               {pages.map((p) => {
                 const status = pageStatus.get(p);
                 return (
@@ -71,7 +71,7 @@ export function QuranProgressGrid({ recitations, onPageClick, onSurahClick }: Pr
                     onClick={() => onPageClick?.(p)}
                     disabled={!onPageClick}
                     className={cn(
-                      "aspect-square rounded-md border text-xs font-semibold transition",
+                      "aspect-square rounded border text-[10px] font-semibold transition",
                       "flex items-center justify-center",
                       !status && "bg-card hover:bg-accent",
                       status === "recited" && "bg-recited text-recited-foreground border-recited",

@@ -3,21 +3,44 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Info } from "lucide-react";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS } from "@/lib/quran-data";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/lib/auth-context";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/student/$studentId")({
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
   component: StudentView,
 });
 
+interface StudentInfo {
+  full_name: string;
+  father_name: string | null;
+  mother_name: string | null;
+  student_phone: string | null;
+  father_phone: string | null;
+  mother_phone: string | null;
+  address: string | null;
+  father_job: string | null;
+  birth_date: string | null;
+  grade_level: string | null;
+}
+
 function StudentView() {
   const { studentId } = Route.useParams();
+  const { session } = useAuth();
   const [name, setName] = useState<string>("");
   const [recitations, setRecitations] = useState<RecitationLite[]>([]);
   const [full, setFull] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [info, setInfo] = useState<StudentInfo | null>(null);
+  const [infoLoading, setInfoLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -31,6 +54,15 @@ function StudentView() {
       setLoading(false);
     })();
   }, [studentId]);
+
+  async function openInfo() {
+    setInfoOpen(true);
+    if (info) return;
+    setInfoLoading(true);
+    const { data } = await supabase.from("students").select("*").eq("id", studentId).maybeSingle();
+    setInfo((data as StudentInfo) ?? null);
+    setInfoLoading(false);
+  }
 
   if (loading) return <div className="p-10 text-center" dir="rtl">جاري التحميل...</div>;
   if (!name) return (
@@ -52,6 +84,7 @@ function StudentView() {
             رجوع
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <BookOpen className="size-5 text-primary" />
             <span className="text-sm font-bold">مسجد الغفران</span>
           </div>
@@ -60,15 +93,24 @@ function StudentView() {
 
       <main className="mx-auto max-w-5xl px-4 py-6">
         <Card className="p-5">
-          <h1 className="text-xl font-bold">{name}</h1>
-          <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
-            <span>
-              <strong className="text-recited">{recitedCount}</strong> تسميع في السنة الحالية
-            </span>
-            {archivedCount > 0 && (
-              <span>
-                <strong className="text-amber-600">{archivedCount}</strong> من سنوات سابقة
-              </span>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold">{name}</h1>
+              <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <span>
+                  <strong className="text-recited">{recitedCount}</strong> تسميع في السنة الحالية
+                </span>
+                {archivedCount > 0 && (
+                  <span>
+                    <strong className="text-amber-600">{archivedCount}</strong> من سنوات سابقة
+                  </span>
+                )}
+              </div>
+            </div>
+            {session && (
+              <Button variant="outline" size="sm" onClick={openInfo}>
+                <Info className="size-4" /> معلومات الطالب
+              </Button>
             )}
           </div>
         </Card>
@@ -108,6 +150,43 @@ function StudentView() {
           </Card>
         </div>
       </main>
+
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>معلومات الطالب</DialogTitle>
+          </DialogHeader>
+          {infoLoading ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">جاري التحميل...</p>
+          ) : !info ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">لا توجد بيانات.</p>
+          ) : (
+            <div className="rounded-lg border bg-card p-4 text-sm">
+              <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <InfoRow label="اسم الطالب" value={info.full_name} />
+                <InfoRow label="اسم الأب" value={info.father_name} />
+                <InfoRow label="اسم الأم" value={info.mother_name} />
+                <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
+                <InfoRow label="تاريخ الميلاد" value={info.birth_date} />
+                <InfoRow label="هاتف الطالب" value={info.student_phone} />
+                <InfoRow label="هاتف الأب" value={info.father_phone} />
+                <InfoRow label="هاتف الأم" value={info.mother_phone} />
+                <InfoRow label="عمل الأب" value={info.father_job} />
+                <InfoRow label="العنوان" value={info.address} full />
+              </dl>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, full }: { label: string; value: string | null; full?: boolean }) {
+  return (
+    <div className={full ? "sm:col-span-2" : undefined}>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="font-medium">{value || "—"}</dd>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Users, GraduationCap, LogOut, Home, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/lib/quran-data";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface NavLink {
   to: string;
@@ -50,6 +51,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span className="hidden sm:inline rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               {ROLE_LABELS[primaryRole]}
             </span>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
