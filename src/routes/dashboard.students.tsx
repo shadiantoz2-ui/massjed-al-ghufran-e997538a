@@ -93,20 +93,25 @@ function StudentsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.full_name.trim()) return toast.error("اسم الطالب مطلوب");
-    const payload = {
-      ...form,
-      birth_date: form.birth_date || null,
-      nickname: form.nickname || null,
-      father_name: form.father_name || null,
-      mother_name: form.mother_name || null,
-      student_phone: form.student_phone || null,
-      father_phone: form.father_phone || null,
-      mother_phone: form.mother_phone || null,
-      address: form.address || null,
-      father_job: form.father_job || null,
-      grade_level: form.grade_level || null,
-    };
+    const required: [string, string][] = [
+      ["full_name", "اسم الطالب"],
+      ["nickname", "كنية الطالب"],
+      ["father_name", "اسم الأب"],
+      ["mother_name", "اسم الأم"],
+      ["birth_date", "تاريخ الميلاد"],
+      ["student_phone", "رقم الطالب"],
+      ["father_phone", "رقم الأب"],
+      ["mother_phone", "رقم الأم"],
+      ["father_job", "عمل الأب"],
+      ["grade_level", "المرحلة الدراسية"],
+      ["address", "عنوان السكن"],
+    ];
+    for (const [k, label] of required) {
+      if (!String((form as any)[k] ?? "").trim()) {
+        return toast.error(`الحقل مطلوب: ${label}`);
+      }
+    }
+    const payload = { ...form };
     if (editing) {
       const { error } = await supabase.from("students").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -152,42 +157,42 @@ function StudentsPage() {
                   <Field label="اسم الطالب *">
                     <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                   </Field>
-                  <Field label="كنية الطالب">
-                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+                  <Field label="كنية الطالب *">
+                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} required />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="اسم الأب">
-                    <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} />
+                  <Field label="اسم الأب *">
+                    <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} required />
                   </Field>
-                  <Field label="اسم الأم">
-                    <Input value={form.mother_name ?? ""} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} />
+                  <Field label="اسم الأم *">
+                    <Input value={form.mother_name ?? ""} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} required />
                   </Field>
                 </div>
-                <Field label="تاريخ الميلاد">
-                  <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
+                <Field label="تاريخ الميلاد *">
+                  <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} required />
                 </Field>
                 <div className="grid grid-cols-3 gap-3">
-                  <Field label="رقم الطالب">
-                    <Input dir="ltr" value={form.student_phone ?? ""} onChange={(e) => setForm({ ...form, student_phone: e.target.value })} />
+                  <Field label="رقم الطالب *">
+                    <Input dir="ltr" value={form.student_phone ?? ""} onChange={(e) => setForm({ ...form, student_phone: e.target.value })} required />
                   </Field>
-                  <Field label="رقم الأب">
-                    <Input dir="ltr" value={form.father_phone ?? ""} onChange={(e) => setForm({ ...form, father_phone: e.target.value })} />
+                  <Field label="رقم الأب *">
+                    <Input dir="ltr" value={form.father_phone ?? ""} onChange={(e) => setForm({ ...form, father_phone: e.target.value })} required />
                   </Field>
-                  <Field label="رقم الأم">
-                    <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} />
+                  <Field label="رقم الأم *">
+                    <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} required />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="عمل الأب">
-                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
+                  <Field label="عمل الأب *">
+                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} required />
                   </Field>
-                  <Field label="المرحلة الدراسية">
-                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} />
+                  <Field label="المرحلة الدراسية *">
+                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} required />
                   </Field>
                 </div>
-                <Field label="عنوان السكن">
-                  <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                <Field label="عنوان السكن *">
+                  <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
                 </Field>
                 <DialogFooter>
                   <Button type="submit">{editing ? "حفظ التعديلات" : "إضافة"}</Button>
@@ -205,7 +210,7 @@ function StudentsPage() {
           <Card key={s.id} className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold">{s.full_name}{s.nickname ? ` ${s.nickname}` : ""}{s.father_name ? ` ${s.father_name}` : ""}</h3>
+                <h3 className="font-bold">{s.full_name}{s.father_name ? ` ${s.father_name}` : ""}{s.nickname ? ` ${s.nickname}` : ""}</h3>
                 {s.grade_level && <p className="text-xs text-muted-foreground">المرحلة: {s.grade_level}</p>}
                 {s.birth_date && <p className="text-xs text-muted-foreground">مواليد: {s.birth_date}</p>}
               </div>
