@@ -105,7 +105,7 @@ function Index() {
 
           {query && !searching && results.length === 0 && (
             <p className="mt-5 text-center text-sm text-muted-foreground">
-             اضغط على زر البحث لعرض النتائج.
+              لم يتم العثور على نتائج. تحقق من الاسم وحاول مرة أخرى.
             </p>
           )}
         </Card>
@@ -113,7 +113,7 @@ function Index() {
         <div className="mt-8 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
           <p>
             <span className="font-semibold text-foreground">للمعلمين:</span> سجّل دخولك من زر «دخول
-           المعلمين» في أعلى الصفحة لإدارة الطلاب وإدخال التسميعات.
+            المعلمين» في أعلى الصفحة لإدارة الطلاب وإدخال التسميعات.
           </p>
         </div>
       </main>
