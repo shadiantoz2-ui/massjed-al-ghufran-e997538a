@@ -210,7 +210,7 @@ function StudentsPage() {
           <Card key={s.id} className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold">{s.full_name}{s.nickname ? ` ${s.nickname}` : ""}{s.father_name ? ` ${s.father_name}` : ""}</h3>
+                <h3 className="font-bold">{s.full_name}{s.father_name ? ` ${s.father_name}` : ""}{s.nickname ? ` ${s.nickname}` : ""}</h3>
                 {s.grade_level && <p className="text-xs text-muted-foreground">المرحلة: {s.grade_level}</p>}
                 {s.birth_date && <p className="text-xs text-muted-foreground">مواليد: {s.birth_date}</p>}
               </div>
