@@ -26,20 +26,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    let currentUserId: string | null = null;
+    // Listener FIRST — only react to identity transitions
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       setSession(s);
-      if (s?.user) {
-        setTimeout(() => loadRoles(s.user.id), 0);
-      } else {
+      const nextId = s?.user?.id ?? null;
+      if (nextId && nextId !== currentUserId) {
+        currentUserId = nextId;
+        setTimeout(() => loadRoles(nextId), 0);
+      } else if (!nextId) {
+        currentUserId = null;
         setRoles([]);
       }
     });
     // Then initial
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
-      if (s?.user) loadRoles(s.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (s?.user) {
+        currentUserId = s.user.id;
+        loadRoles(s.user.id).finally(() => setLoading(false));
+      } else setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
