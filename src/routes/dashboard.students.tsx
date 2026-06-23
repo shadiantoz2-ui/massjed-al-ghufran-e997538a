@@ -93,20 +93,25 @@ function StudentsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.full_name.trim()) return toast.error("اسم الطالب مطلوب");
-    const payload = {
-      ...form,
-      birth_date: form.birth_date || null,
-      nickname: form.nickname || null,
-      father_name: form.father_name || null,
-      mother_name: form.mother_name || null,
-      student_phone: form.student_phone || null,
-      father_phone: form.father_phone || null,
-      mother_phone: form.mother_phone || null,
-      address: form.address || null,
-      father_job: form.father_job || null,
-      grade_level: form.grade_level || null,
-    };
+    const required: [string, string][] = [
+      ["full_name", "اسم الطالب"],
+      ["nickname", "كنية الطالب"],
+      ["father_name", "اسم الأب"],
+      ["mother_name", "اسم الأم"],
+      ["birth_date", "تاريخ الميلاد"],
+      ["student_phone", "رقم الطالب"],
+      ["father_phone", "رقم الأب"],
+      ["mother_phone", "رقم الأم"],
+      ["father_job", "عمل الأب"],
+      ["grade_level", "المرحلة الدراسية"],
+      ["address", "عنوان السكن"],
+    ];
+    for (const [k, label] of required) {
+      if (!String((form as any)[k] ?? "").trim()) {
+        return toast.error(`الحقل مطلوب: ${label}`);
+      }
+    }
+    const payload = { ...form };
     if (editing) {
       const { error } = await supabase.from("students").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
