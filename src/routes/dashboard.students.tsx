@@ -157,42 +157,42 @@ function StudentsPage() {
                   <Field label="اسم الطالب *">
                     <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
                   </Field>
-                  <Field label="كنية الطالب">
-                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+                  <Field label="كنية الطالب *">
+                    <Input value={form.nickname ?? ""} onChange={(e) => setForm({ ...form, nickname: e.target.value })} required />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="اسم الأب">
-                    <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} />
+                  <Field label="اسم الأب *">
+                    <Input value={form.father_name ?? ""} onChange={(e) => setForm({ ...form, father_name: e.target.value })} required />
                   </Field>
-                  <Field label="اسم الأم">
-                    <Input value={form.mother_name ?? ""} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} />
+                  <Field label="اسم الأم *">
+                    <Input value={form.mother_name ?? ""} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} required />
                   </Field>
                 </div>
-                <Field label="تاريخ الميلاد">
-                  <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
+                <Field label="تاريخ الميلاد *">
+                  <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} required />
                 </Field>
                 <div className="grid grid-cols-3 gap-3">
-                  <Field label="رقم الطالب">
-                    <Input dir="ltr" value={form.student_phone ?? ""} onChange={(e) => setForm({ ...form, student_phone: e.target.value })} />
+                  <Field label="رقم الطالب *">
+                    <Input dir="ltr" value={form.student_phone ?? ""} onChange={(e) => setForm({ ...form, student_phone: e.target.value })} required />
                   </Field>
-                  <Field label="رقم الأب">
-                    <Input dir="ltr" value={form.father_phone ?? ""} onChange={(e) => setForm({ ...form, father_phone: e.target.value })} />
+                  <Field label="رقم الأب *">
+                    <Input dir="ltr" value={form.father_phone ?? ""} onChange={(e) => setForm({ ...form, father_phone: e.target.value })} required />
                   </Field>
-                  <Field label="رقم الأم">
-                    <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} />
+                  <Field label="رقم الأم *">
+                    <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} required />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="عمل الأب">
-                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} />
+                  <Field label="عمل الأب *">
+                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} required />
                   </Field>
-                  <Field label="المرحلة الدراسية">
-                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} />
+                  <Field label="المرحلة الدراسية *">
+                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} required />
                   </Field>
                 </div>
-                <Field label="عنوان السكن">
-                  <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                <Field label="عنوان السكن *">
+                  <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
                 </Field>
                 <DialogFooter>
                   <Button type="submit">{editing ? "حفظ التعديلات" : "إضافة"}</Button>
