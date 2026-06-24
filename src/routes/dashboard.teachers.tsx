@@ -15,7 +15,9 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { ROLE_LABELS } from "@/lib/quran-data";
 import { toast } from "sonner";
-import { Plus, Trash2, ShieldAlert } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, KeyRound } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { resetTeacherPassword } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
@@ -44,6 +46,33 @@ function TeachersPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"supervisor" | "reciter">("reciter");
+
+  // Reset password dialog
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<TeacherRow | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  const resetPwd = useServerFn(resetTeacherPassword);
+
+  function openReset(t: TeacherRow) {
+    setResetTarget(t);
+    setNewPassword("");
+    setResetOpen(true);
+  }
+  async function submitReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetTarget) return;
+    setResetBusy(true);
+    try {
+      await resetPwd({ data: { user_id: resetTarget.user_id, new_password: newPassword } });
+      toast.success("تم تغيير كلمة المرور");
+      setResetOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تغيير كلمة المرور");
+    } finally {
+      setResetBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -179,9 +208,44 @@ function TeachersPage() {
                 </span>
               ))}
             </div>
+            {t.user_id !== user?.id && (
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => openReset(t)}>
+                <KeyRound className="size-3.5" /> تغيير كلمة المرور
+              </Button>
+            )}
           </Card>
         ))}
       </div>
+
+      {/* Reset password dialog */}
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تغيير كلمة مرور المعلم</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitReset} className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              المعلم: <span className="font-semibold text-foreground">{resetTarget?.full_name || resetTarget?.username}</span>
+            </p>
+            <div>
+              <Label>كلمة المرور الجديدة (6 أحرف فأكثر)</Label>
+              <Input
+                dir="ltr"
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={resetBusy || newPassword.length < 6}>
+                {resetBusy ? "جاري..." : "حفظ"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

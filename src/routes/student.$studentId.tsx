@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowRight, BookOpen, Info } from "lucide-react";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
+import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS } from "@/lib/quran-data";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth-context";
@@ -31,12 +33,19 @@ interface StudentInfo {
   grade_level: string | null;
 }
 
+interface ProbeRow extends ProbeLite {
+  grade: string | null;
+  notes: string | null;
+  probe_date: string;
+}
+
 function StudentView() {
   const { studentId } = Route.useParams();
   const { session } = useAuth();
   const [name, setName] = useState<string>("");
   const [recitations, setRecitations] = useState<RecitationLite[]>([]);
   const [full, setFull] = useState<any[]>([]);
+  const [probes, setProbes] = useState<ProbeRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [infoOpen, setInfoOpen] = useState(false);
@@ -45,13 +54,15 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
+        supabase.rpc("get_student_probes", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
+      setProbes((pr ?? []) as ProbeRow[]);
       setLoading(false);
     })();
   }, [studentId]);
@@ -75,6 +86,7 @@ function StudentView() {
 
   const recitedCount = recitations.filter((r) => !r.archived).length;
   const archivedCount = recitations.filter((r) => r.archived).length;
+  const probedCount = probes.filter((p) => !p.archived).length;
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -106,6 +118,9 @@ function StudentView() {
                     <strong className="text-amber-600">{archivedCount}</strong> من سنوات سابقة
                   </span>
                 )}
+                <span>
+                  <strong className="text-recited">{probedCount}</strong> جزء مسبور
+                </span>
               </div>
             </div>
             {session && (
@@ -116,40 +131,80 @@ function StudentView() {
           </div>
         </Card>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-          <Card className="p-5">
-            <QuranProgressGrid recitations={recitations} />
-          </Card>
+        <Tabs defaultValue="recitations" className="mt-6">
+          <TabsList className="w-full">
+            <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
+            <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
+          </TabsList>
 
-          <Card className="p-5 h-fit lg:sticky lg:top-20">
-            <h2 className="mb-3 font-bold">سجل التسميعات</h2>
-            {full.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لا توجد تسميعات بعد.</p>
-            ) : (
-              <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
-                {full.map((r) => (
-                  <li
-                    key={r.id}
-                    className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}
-                  >
-                    <div className="font-semibold">
-                      {r.kind === "page"
-                        ? `صفحة ${r.page_number}`
-                        : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}${
-                            r.from_ayah && r.to_ayah ? ` (${r.from_ayah}-${r.to_ayah})` : ""
-                          }`}
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{r.recitation_date}</span>
-                      {r.grade && <span>{GRADE_LABELS[r.grade]}</span>}
-                    </div>
-                    {r.notes && <div className="mt-1 text-xs">{r.notes}</div>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
+          <TabsContent value="recitations" className="pt-4">
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              <Card className="p-5">
+                <QuranProgressGrid recitations={recitations} />
+              </Card>
+
+              <Card className="p-5 h-fit lg:sticky lg:top-20">
+                <h2 className="mb-3 font-bold">سجل التسميعات</h2>
+                {full.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">لا توجد تسميعات بعد.</p>
+                ) : (
+                  <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
+                    {full.map((r) => (
+                      <li
+                        key={r.id}
+                        className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}
+                      >
+                        <div className="font-semibold">
+                          {r.kind === "page"
+                            ? `صفحة ${r.page_number}`
+                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}${
+                                r.from_ayah && r.to_ayah ? ` (${r.from_ayah}-${r.to_ayah})` : ""
+                              }`}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{r.recitation_date}</span>
+                          {r.grade && <span>{GRADE_LABELS[r.grade]}</span>}
+                        </div>
+                        {r.notes && <div className="mt-1 text-xs">{r.notes}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="probes" className="pt-4">
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              <Card className="p-5">
+                <h2 className="mb-3 font-bold">سبر الأجزاء</h2>
+                <JuzProbeGrid probes={probes} />
+              </Card>
+              <Card className="p-5 h-fit lg:sticky lg:top-20">
+                <h2 className="mb-3 font-bold">سجل السبر</h2>
+                {probes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">لا يوجد سبر مسجَّل بعد.</p>
+                ) : (
+                  <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
+                    {probes.map((p) => (
+                      <li
+                        key={p.id}
+                        className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : "bg-recited/10"}`}
+                      >
+                        <div className="font-semibold">سبر الجزء {p.juz_number}</div>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{p.probe_date}</span>
+                          {p.grade && <span>{GRADE_LABELS[p.grade]}</span>}
+                        </div>
+                        {p.notes && <div className="mt-1 text-xs">{p.notes}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>

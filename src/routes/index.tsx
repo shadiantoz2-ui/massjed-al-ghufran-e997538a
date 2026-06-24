@@ -103,9 +103,9 @@ function Index() {
             </ul>
           )}
 
-          {query && !searching && results.length === 0 && (
+          {results.length === 0 && (
             <p className="mt-5 text-center text-sm text-muted-foreground">
-              لم يتم العثور على نتائج. تحقق من الاسم وحاول مرة أخرى.
+              اضغط على زر البحث لعرض النتائج
             </p>
           )}
         </Card>
