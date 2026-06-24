@@ -32,6 +32,56 @@ export type Database = {
         }
         Relationships: []
       }
+      probes: {
+        Row: {
+          academic_year: number | null
+          archived: boolean
+          created_at: string
+          grade: string | null
+          id: string
+          juz_number: number
+          notes: string | null
+          probe_date: string
+          student_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: number | null
+          archived?: boolean
+          created_at?: string
+          grade?: string | null
+          id?: string
+          juz_number: number
+          notes?: string | null
+          probe_date?: string
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: number | null
+          archived?: boolean
+          created_at?: string
+          grade?: string | null
+          id?: string
+          juz_number?: number
+          notes?: string | null
+          probe_date?: string
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "probes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -194,6 +244,18 @@ export type Database = {
         Returns: {
           full_name: string
           id: string
+        }[]
+      }
+      get_student_probes: {
+        Args: { _student_id: string }
+        Returns: {
+          academic_year: number
+          archived: boolean
+          grade: string
+          id: string
+          juz_number: number
+          notes: string
+          probe_date: string
         }[]
       }
       get_student_recitations: {
