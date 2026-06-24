@@ -20,7 +20,6 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<"signin" | "forgot">("signin");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard" });
@@ -30,19 +29,10 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-        toast.success("تم إرسال رابط استعادة كلمة المرور إلى بريدك");
-        setMode("signin");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("تم تسجيل الدخول");
-        navigate({ to: "/dashboard" });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("تم تسجيل الدخول");
+      navigate({ to: "/dashboard" });
     } catch (err: any) {
       toast.error(err.message || "حدث خطأ");
     } finally {
@@ -60,51 +50,23 @@ function AuthPage() {
         <Card className="p-6">
           <div className="mb-5 flex items-center gap-2">
             <BookOpen className="size-6 text-primary" />
-            <h1 className="text-xl font-bold">
-              {mode === "forgot" ? "استعادة كلمة المرور" : "دخول المعلمين"}
-            </h1>
+            <h1 className="text-xl font-bold">دخول المعلمين</h1>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                dir="ltr"
-              />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required dir="ltr" />
             </div>
-            {mode === "signin" && (
-              <div>
-                <Label htmlFor="password">كلمة المرور</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  dir="ltr"
-                />
-              </div>
-            )}
+            <div>
+              <Label htmlFor="password">كلمة المرور</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} dir="ltr" />
+            </div>
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "جاري..." : mode === "forgot" ? "إرسال الرابط" : "دخول"}
+              {busy ? "جاري..." : "دخول"}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setMode(mode === "forgot" ? "signin" : "forgot")}
-              className="text-xs text-primary hover:underline"
-            >
-              {mode === "forgot" ? "العودة لتسجيل الدخول" : "نسيت كلمة المرور؟"}
-            </button>
-          </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            الحسابات يتم إنشاؤها من قبل مدير النظام فقط.
+            الحسابات وكلمات المرور تُدار من قبل مدير النظام فقط.
           </p>
         </Card>
       </div>
