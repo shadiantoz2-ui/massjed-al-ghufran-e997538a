@@ -26,6 +26,7 @@ function Index() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StudentResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
   const navigate = useNavigate();
 
   async function handleSearch(e: React.FormEvent) {
@@ -39,6 +40,7 @@ function Index() {
       return;
     }
     setResults((data as StudentResult[]) ?? []);
+    setSearched(true);
   }
 
   return (
