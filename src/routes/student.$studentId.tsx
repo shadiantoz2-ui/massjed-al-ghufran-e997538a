@@ -134,7 +134,7 @@ function StudentView() {
         <Tabs defaultValue="recitations" className="mt-6">
           <TabsList className="w-full">
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-            <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
+            <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recitations" className="pt-4">
@@ -177,7 +177,7 @@ function StudentView() {
           <TabsContent value="probes" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
               <Card className="p-5">
-                <h2 className="mb-3 font-bold">سبر الأجزاء</h2>
+                <h2 className="mb-3 font-bold">سبر الأجزاء في الأوقاف</h2>
                 <JuzProbeGrid probes={probes} />
               </Card>
               <Card className="p-5 h-fit lg:sticky lg:top-20">
