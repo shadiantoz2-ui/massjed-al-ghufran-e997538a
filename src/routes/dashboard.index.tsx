@@ -94,7 +94,7 @@ function Home() {
       </Card>
 
       {roles.includes("admin") && (
-        <Card className="p-5 border-amber-400/40 bg-amber-50/60">
+        <Card className="p-5 border-amber-400/40 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/30">
           <h2 className="font-bold">إنهاء السنة الدراسية</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             عند البدء بسنة جديدة سيتم تحويل جميع التسميعات الحالية إلى أرشيف (اللون الأصفر) والبدء من جديد باللون الأخضر.

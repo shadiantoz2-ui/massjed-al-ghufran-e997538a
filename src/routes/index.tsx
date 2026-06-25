@@ -103,7 +103,7 @@ function Index() {
             </ul>
           )}
 
-          {results.length === 0 && (
+          {results.length === 0 && query.trim().length > 0 && (
             <p className="mt-5 text-center text-sm text-muted-foreground">
               اضغط على زر البحث لعرض النتائج
             </p>
