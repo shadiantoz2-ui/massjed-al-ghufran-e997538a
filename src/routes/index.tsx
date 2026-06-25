@@ -80,7 +80,7 @@ function Index() {
               dir="rtl"
               placeholder="اكتب اسم الطالب..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setSearched(false); }}
               className="text-base"
             />
             <Button type="submit" disabled={searching || !query.trim()}>
@@ -105,9 +105,14 @@ function Index() {
             </ul>
           )}
 
-          {results.length === 0 && query.trim().length > 0 && (
+          {results.length === 0 && !searched && query.trim().length > 0 && (
             <p className="mt-5 text-center text-sm text-muted-foreground">
               اضغط على زر البحث لعرض النتائج
+            </p>
+          )}
+          {results.length === 0 && searched && query.trim().length > 0 && (
+            <p className="mt-5 text-center text-sm text-muted-foreground">
+              لا يوجد بيانات لهذا الطالب
             </p>
           )}
         </Card>
