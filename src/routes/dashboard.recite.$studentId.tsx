@@ -353,7 +353,7 @@ function RecitePage() {
       <Tabs defaultValue="recitations">
         <TabsList className="w-full">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-          <TabsTrigger value="probes" className="flex-1">السبر</TabsTrigger>
+          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
         </TabsList>
 
         {/* ====== Recitations section ====== */}
