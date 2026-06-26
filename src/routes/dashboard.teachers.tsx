@@ -218,11 +218,16 @@ function TeachersPage() {
                 </span>
               ))}
             </div>
-            {t.user_id !== user?.id && (
-              <Button size="sm" variant="outline" className="mt-3" onClick={() => openReset(t)}>
-                <KeyRound className="size-3.5" /> تغيير كلمة المرور
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => openEdit(t)}>
+                <Pencil className="size-3.5" /> تعديل البيانات
               </Button>
-            )}
+              {t.user_id !== user?.id && (
+                <Button size="sm" variant="outline" onClick={() => openReset(t)}>
+                  <KeyRound className="size-3.5" /> تغيير كلمة المرور
+                </Button>
+              )}
+            </div>
           </Card>
         ))}
       </div>
