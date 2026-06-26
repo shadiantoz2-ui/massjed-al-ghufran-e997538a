@@ -15,9 +15,9 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { ROLE_LABELS } from "@/lib/quran-data";
 import { toast } from "sonner";
-import { Plus, Trash2, ShieldAlert, KeyRound } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, KeyRound, Pencil } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { resetTeacherPassword, createTeacherAccount } from "@/lib/admin-users.functions";
+import { resetTeacherPassword, createTeacherAccount, updateTeacherAccount } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
@@ -54,6 +54,36 @@ function TeachersPage() {
   const [resetBusy, setResetBusy] = useState(false);
   const resetPwd = useServerFn(resetTeacherPassword);
   const createTeacherFn = useServerFn(createTeacherAccount);
+  const updateTeacherFn = useServerFn(updateTeacherAccount);
+
+  // Edit dialog
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TeacherRow | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+
+  function openEdit(t: TeacherRow) {
+    setEditTarget(t);
+    setEditName(t.full_name || "");
+    setEditEmail(t.username || "");
+    setEditOpen(true);
+  }
+  async function submitEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    setEditBusy(true);
+    try {
+      await updateTeacherFn({ data: { user_id: editTarget.user_id, full_name: editName, email: editEmail } });
+      toast.success("تم تحديث بيانات المعلم");
+      setEditOpen(false);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "تعذر التحديث");
+    } finally {
+      setEditBusy(false);
+    }
+  }
 
   function openReset(t: TeacherRow) {
     setResetTarget(t);
@@ -188,11 +218,16 @@ function TeachersPage() {
                 </span>
               ))}
             </div>
-            {t.user_id !== user?.id && (
-              <Button size="sm" variant="outline" className="mt-3" onClick={() => openReset(t)}>
-                <KeyRound className="size-3.5" /> تغيير كلمة المرور
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => openEdit(t)}>
+                <Pencil className="size-3.5" /> تعديل البيانات
               </Button>
-            )}
+              {t.user_id !== user?.id && (
+                <Button size="sm" variant="outline" onClick={() => openReset(t)}>
+                  <KeyRound className="size-3.5" /> تغيير كلمة المرور
+                </Button>
+              )}
+            </div>
           </Card>
         ))}
       </div>
@@ -222,6 +257,28 @@ function TeachersPage() {
               <Button type="submit" disabled={resetBusy || newPassword.length < 6}>
                 {resetBusy ? "جاري..." : "حفظ"}
               </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit teacher dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات المعلم</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitEdit} className="space-y-3">
+            <div>
+              <Label>الاسم الكامل</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+            </div>
+            <div>
+              <Label>البريد الإلكتروني (اسم المستخدم)</Label>
+              <Input dir="ltr" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={editBusy}>{editBusy ? "جاري..." : "حفظ"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

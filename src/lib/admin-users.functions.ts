@@ -71,3 +71,39 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
 
     return { ok: true, user_id: userId };
   });
+
+const updateSchema = z.object({
+  user_id: z.string().uuid(),
+  full_name: z.string().min(1),
+  email: z.string().email(),
+});
+
+export const updateTeacherAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => updateSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rolesRows, error: rolesErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (rolesErr) throw new Error(rolesErr.message);
+    const isAdmin = (rolesRows ?? []).some((r) => r.role === "admin");
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      email: data.email,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name },
+    });
+    if (authErr) throw new Error(authErr.message);
+
+    const { error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ full_name: data.full_name, username: data.email })
+      .eq("id", data.user_id);
+    if (profErr) throw new Error(profErr.message);
+
+    return { ok: true };
+  });
