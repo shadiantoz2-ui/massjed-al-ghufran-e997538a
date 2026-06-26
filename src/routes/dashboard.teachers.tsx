@@ -53,6 +53,7 @@ function TeachersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
   const resetPwd = useServerFn(resetTeacherPassword);
+  const createTeacherFn = useServerFn(createTeacherAccount);
 
   function openReset(t: TeacherRow) {
     setResetTarget(t);
