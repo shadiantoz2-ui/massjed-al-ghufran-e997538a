@@ -261,6 +261,28 @@ function TeachersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit teacher dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات المعلم</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitEdit} className="space-y-3">
+            <div>
+              <Label>الاسم الكامل</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+            </div>
+            <div>
+              <Label>البريد الإلكتروني (اسم المستخدم)</Label>
+              <Input dir="ltr" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={editBusy}>{editBusy ? "جاري..." : "حفظ"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
