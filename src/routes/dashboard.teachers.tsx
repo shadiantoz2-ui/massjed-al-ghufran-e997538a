@@ -17,7 +17,7 @@ import { ROLE_LABELS } from "@/lib/quran-data";
 import { toast } from "sonner";
 import { Plus, Trash2, ShieldAlert, KeyRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { resetTeacherPassword } from "@/lib/admin-users.functions";
+import { resetTeacherPassword, createTeacherAccount } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
