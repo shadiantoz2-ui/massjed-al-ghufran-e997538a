@@ -54,6 +54,36 @@ function TeachersPage() {
   const [resetBusy, setResetBusy] = useState(false);
   const resetPwd = useServerFn(resetTeacherPassword);
   const createTeacherFn = useServerFn(createTeacherAccount);
+  const updateTeacherFn = useServerFn(updateTeacherAccount);
+
+  // Edit dialog
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TeacherRow | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+
+  function openEdit(t: TeacherRow) {
+    setEditTarget(t);
+    setEditName(t.full_name || "");
+    setEditEmail(t.username || "");
+    setEditOpen(true);
+  }
+  async function submitEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    setEditBusy(true);
+    try {
+      await updateTeacherFn({ data: { user_id: editTarget.user_id, full_name: editName, email: editEmail } });
+      toast.success("تم تحديث بيانات المعلم");
+      setEditOpen(false);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "تعذر التحديث");
+    } finally {
+      setEditBusy(false);
+    }
+  }
 
   function openReset(t: TeacherRow) {
     setResetTarget(t);
