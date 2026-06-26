@@ -17,7 +17,7 @@ import { ROLE_LABELS } from "@/lib/quran-data";
 import { toast } from "sonner";
 import { Plus, Trash2, ShieldAlert, KeyRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { resetTeacherPassword } from "@/lib/admin-users.functions";
+import { resetTeacherPassword, createTeacherAccount } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
@@ -53,6 +53,7 @@ function TeachersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
   const resetPwd = useServerFn(resetTeacherPassword);
+  const createTeacherFn = useServerFn(createTeacherAccount);
 
   function openReset(t: TeacherRow) {
     setResetTarget(t);
@@ -97,30 +98,9 @@ function TeachersPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      // Sign up the user via standard signup (publishable key). This logs out current admin briefly;
-      // we'll restore the admin session right after by storing it.
-      const adminSession = (await supabase.auth.getSession()).data.session;
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
+      await createTeacherFn({
+        data: { full_name: fullName, email, password, role },
       });
-      if (error) throw error;
-      if (!data.user) throw new Error("لم يتم إنشاء المستخدم");
-
-      // Assign role (allowed because admin policy on user_roles)
-      // Restore admin session first so RLS recognizes us as admin
-      if (adminSession) {
-        await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token,
-        });
-      }
-      const { error: rerr } = await supabase
-        .from("user_roles").insert({ user_id: data.user.id, role });
-      if (rerr) throw rerr;
-
       toast.success("تم إنشاء حساب المعلم");
       setOpen(false);
       setFullName(""); setEmail(""); setPassword(""); setRole("reciter");
