@@ -45,7 +45,7 @@ function TeachersPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"supervisor" | "reciter">("reciter");
+  const [role, setRole] = useState<"supervisor" | "reciter" | "halaqah">("reciter");
 
   // Reset password dialog
   const [resetOpen, setResetOpen] = useState(false);
@@ -191,6 +191,7 @@ function TeachersPage() {
                   <SelectContent>
                     <SelectItem value="supervisor">معلم مشرف</SelectItem>
                     <SelectItem value="reciter">معلم مقرئ</SelectItem>
+                    <SelectItem value="halaqah">معلم الحلقة</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

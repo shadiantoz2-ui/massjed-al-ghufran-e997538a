@@ -86,7 +86,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             })}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <span className="font-bold text-primary">🌿 أهلاً وسهلاً</span>
+          <span className="mr-2 text-muted-foreground">
+            {session.user?.user_metadata?.full_name || session.user?.email} — بارك الله في جهودك.
+          </span>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }

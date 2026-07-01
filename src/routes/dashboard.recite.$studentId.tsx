@@ -18,6 +18,7 @@ import { useAuth, canEditAnyRecitation } from "@/lib/auth-context";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
+import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { toast } from "sonner";
 import { ArrowRight, Pencil, Trash2, Layers, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -52,13 +53,24 @@ interface StudentInfo {
   nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
-  student_phone: string | null;
   father_phone: string | null;
   mother_phone: string | null;
+  contact_phone: string | null;
   address: string | null;
   father_job: string | null;
-  birth_date: string | null;
+  birth_year: number | null;
   grade_level: string | null;
+  teacher_id: string | null;
+}
+
+interface FullHadith {
+  id: string;
+  hadith_number: number;
+  teacher_id: string;
+  grade: string | null;
+  notes: string | null;
+  recitation_date: string;
+  archived: boolean;
 }
 
 function RecitePage() {
@@ -70,6 +82,14 @@ function RecitePage() {
   const [recs, setRecs] = useState<FullRecitation[]>([]);
   const [probes, setProbes] = useState<FullProbe[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [studentTeacherId, setStudentTeacherId] = useState<string | null>(null);
+  const [hadiths, setHadiths] = useState<FullHadith[]>([]);
+  const [hadithOpen, setHadithOpen] = useState(false);
+  const [hadithNum, setHadithNum] = useState<number | "">("");
+  const [hadithGrade, setHadithGrade] = useState("excellent");
+  const [hadithNotes, setHadithNotes] = useState("");
+  const [hadithDate, setHadithDate] = useState<string>(new Date().toISOString().slice(0, 10));
 
   // single recitation dialog
   const [open, setOpen] = useState(false);
@@ -105,14 +125,17 @@ function RecitePage() {
   const [info, setInfo] = useState<StudentInfo | null>(null);
 
   async function load() {
-    const [{ data: s }, { data: r }, { data: p }] = await Promise.all([
-      supabase.from("students").select("full_name, nickname, father_name").eq("id", studentId).maybeSingle(),
+    const [{ data: s }, { data: r }, { data: p }, { data: h }] = await Promise.all([
+      supabase.from("students").select("full_name, nickname, father_name, teacher_id").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
       supabase.from("probes").select("*").eq("student_id", studentId).order("probe_date", { ascending: false }),
+      supabase.from("hadith_recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
     ]);
     setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}${s.nickname ? ` ${s.nickname}` : ""}` : "");
+    setStudentTeacherId(s?.teacher_id ?? null);
     setRecs((r ?? []) as FullRecitation[]);
     setProbes((p ?? []) as FullProbe[]);
+    setHadiths((h ?? []) as FullHadith[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, [studentId]);
@@ -276,8 +299,37 @@ function RecitePage() {
     load();
   }
 
+  const canHalaqahHere = roles.includes("halaqah") && studentTeacherId === user?.id;
   function canModify(r: FullRecitation) {
     return canEditAll || r.teacher_id === user?.id;
+  }
+
+  async function saveHadith(e: React.FormEvent) {
+    e.preventDefault();
+    if (!hadithNum) return toast.error("اختر رقم الحديث");
+    const dup = hadiths.find((h) => !h.archived && h.hadith_number === Number(hadithNum));
+    if (dup) {
+      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً في هذه السنة — لم يُضَف.`);
+      setHadithOpen(false);
+      return;
+    }
+    const payload: any = {
+      student_id: studentId, teacher_id: user!.id,
+      hadith_number: Number(hadithNum), grade: hadithGrade,
+      notes: hadithNotes || null, recitation_date: hadithDate,
+    };
+    const { error } = await supabase.from("hadith_recitations").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("تم تسجيل الحديث");
+    setHadithOpen(false);
+    load();
+  }
+  async function removeHadith(id: string) {
+    if (!confirm("حذف هذا الحديث؟")) return;
+    const { error } = await supabase.from("hadith_recitations").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
   }
 
   // ========= Probes =========
@@ -354,6 +406,7 @@ function RecitePage() {
         <TabsList className="w-full">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
           <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
+          <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
         </TabsList>
 
         {/* ====== Recitations section ====== */}
@@ -470,7 +523,85 @@ function RecitePage() {
             )}
           </Card>
         </TabsContent>
+
+        {/* ====== Hadiths section ====== */}
+        <TabsContent value="hadiths" className="space-y-4 pt-3">
+          <Card className="p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
+              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
+                <Layers className="size-4" /> تسجيل حديث
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {NAWAWI_HADITHS.map((h) => {
+                const recs = hadiths.filter((x) => x.hadith_number === h.number);
+                const current = recs.find((x) => !x.archived);
+                const archived = !current && recs.some((x) => x.archived);
+                return (
+                  <div key={h.number} className={cn(
+                    "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
+                    !current && !archived && "bg-card",
+                    current && "bg-recited text-recited-foreground border-recited",
+                    archived && "bg-archived text-archived-foreground border-archived/70",
+                  )}>
+                    <span><span className="font-bold">{h.number}.</span> {h.title}</span>
+                    {current && (canEditAll || current.teacher_id === user?.id || canHalaqahHere) && (
+                      <button onClick={() => removeHadith(current.id)} className="opacity-70 hover:opacity-100">
+                        <Trash2 className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Hadith dialog */}
+      <Dialog open={hadithOpen} onOpenChange={setHadithOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تسجيل حديث</DialogTitle></DialogHeader>
+          <form onSubmit={saveHadith} className="space-y-3">
+            <div>
+              <Label>الحديث</Label>
+              <Select value={hadithNum ? String(hadithNum) : ""} onValueChange={(v) => setHadithNum(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="اختر الحديث" /></SelectTrigger>
+                <SelectContent>
+                  {NAWAWI_HADITHS.map((h) => (
+                    <SelectItem key={h.number} value={String(h.number)}>{h.number}. {h.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>التاريخ</Label>
+                <Input type="date" value={hadithDate} onChange={(e) => setHadithDate(e.target.value)} required />
+              </div>
+              <div>
+                <Label>التقييم</Label>
+                <Select value={hadithGrade} onValueChange={setHadithGrade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(GRADE_LABELS).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>ملاحظات</Label>
+              <Textarea rows={2} value={hadithNotes} onChange={(e) => setHadithNotes(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button type="submit">تسجيل</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Single recitation dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -690,10 +821,10 @@ function RecitePage() {
                 <InfoRow label="اسم الأب" value={info.father_name} />
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
-                <InfoRow label="تاريخ الميلاد" value={info.birth_date} />
-                <InfoRow label="هاتف الطالب" value={info.student_phone} />
+                <InfoRow label="عام الميلاد" value={info.birth_year != null ? String(info.birth_year) : null} />
                 <InfoRow label="هاتف الأب" value={info.father_phone} />
                 <InfoRow label="هاتف الأم" value={info.mother_phone} />
+                <InfoRow label="رقم التواصل (واتساب)" value={info.contact_phone} />
                 <InfoRow label="عمل الأب" value={info.father_job} />
                 <InfoRow label="العنوان" value={info.address} full />
               </dl>

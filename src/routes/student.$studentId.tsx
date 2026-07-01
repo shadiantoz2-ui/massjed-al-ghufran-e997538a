@@ -8,8 +8,10 @@ import { ArrowRight, BookOpen, Info } from "lucide-react";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS } from "@/lib/quran-data";
+import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth-context";
+import { cn } from "@/lib/utils";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -24,19 +26,23 @@ interface StudentInfo {
   nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
-  student_phone: string | null;
-  father_phone: string | null;
-  mother_phone: string | null;
-  address: string | null;
-  father_job: string | null;
-  birth_date: string | null;
   grade_level: string | null;
+  birth_year: number | null;
 }
 
 interface ProbeRow extends ProbeLite {
   grade: string | null;
   notes: string | null;
   probe_date: string;
+}
+
+interface HadithRow {
+  id: string;
+  hadith_number: number;
+  grade: string | null;
+  notes: string | null;
+  recitation_date: string;
+  archived: boolean;
 }
 
 function StudentView() {
@@ -46,6 +52,7 @@ function StudentView() {
   const [recitations, setRecitations] = useState<RecitationLite[]>([]);
   const [full, setFull] = useState<any[]>([]);
   const [probes, setProbes] = useState<ProbeRow[]>([]);
+  const [hadiths, setHadiths] = useState<HadithRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [infoOpen, setInfoOpen] = useState(false);
@@ -54,15 +61,17 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }, { data: pr }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
         supabase.rpc("get_student_probes", { _student_id: studentId }),
+        supabase.rpc("get_student_hadiths", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
       setProbes((pr ?? []) as ProbeRow[]);
+      setHadiths((hd ?? []) as HadithRow[]);
       setLoading(false);
     })();
   }, [studentId]);
@@ -71,7 +80,11 @@ function StudentView() {
     setInfoOpen(true);
     if (info) return;
     setInfoLoading(true);
-    const { data } = await supabase.from("students").select("*").eq("id", studentId).maybeSingle();
+    const { data } = await supabase
+      .from("students")
+      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year")
+      .eq("id", studentId)
+      .maybeSingle();
     setInfo((data as StudentInfo) ?? null);
     setInfoLoading(false);
   }
@@ -87,6 +100,15 @@ function StudentView() {
   const recitedCount = recitations.filter((r) => !r.archived).length;
   const archivedCount = recitations.filter((r) => r.archived).length;
   const probedCount = probes.filter((p) => !p.archived).length;
+  const hadithCount = hadiths.filter((h) => !h.archived).length;
+
+  const hadithStatus = new Map<number, "recited" | "archived">();
+  for (const h of hadiths) {
+    const cur = hadithStatus.get(h.hadith_number);
+    if (!cur || (cur === "archived" && !h.archived)) {
+      hadithStatus.set(h.hadith_number, h.archived ? "archived" : "recited");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -110,17 +132,12 @@ function StudentView() {
             <div>
               <h1 className="text-xl font-bold">{name}</h1>
               <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                <span>
-                  <strong className="text-recited">{recitedCount}</strong> تسميع في السنة الحالية
-                </span>
+                <span><strong className="text-recited">{recitedCount}</strong> تسميع في السنة الحالية</span>
                 {archivedCount > 0 && (
-                  <span>
-                    <strong className="text-amber-600">{archivedCount}</strong> من سنوات سابقة
-                  </span>
+                  <span><strong className="text-amber-600">{archivedCount}</strong> من سنوات سابقة</span>
                 )}
-                <span>
-                  <strong className="text-recited">{probedCount}</strong> جزء مسبور
-                </span>
+                <span><strong className="text-recited">{probedCount}</strong> جزء مسبور</span>
+                <span><strong className="text-recited">{hadithCount}</strong> حديث</span>
               </div>
             </div>
             {session && (
@@ -135,14 +152,12 @@ function StudentView() {
           <TabsList className="w-full">
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
             <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
+            <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recitations" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-              <Card className="p-5">
-                <QuranProgressGrid recitations={recitations} />
-              </Card>
-
+              <Card className="p-5"><QuranProgressGrid recitations={recitations} /></Card>
               <Card className="p-5 h-fit lg:sticky lg:top-20">
                 <h2 className="mb-3 font-bold">سجل التسميعات</h2>
                 {full.length === 0 ? (
@@ -150,16 +165,11 @@ function StudentView() {
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
                     {full.map((r) => (
-                      <li
-                        key={r.id}
-                        className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}
-                      >
+                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}>
                         <div className="font-semibold">
                           {r.kind === "page"
                             ? `صفحة ${r.page_number}`
-                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}${
-                                r.from_ayah && r.to_ayah ? ` (${r.from_ayah}-${r.to_ayah})` : ""
-                              }`}
+                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{r.recitation_date}</span>
@@ -187,10 +197,7 @@ function StudentView() {
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
                     {probes.map((p) => (
-                      <li
-                        key={p.id}
-                        className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : "bg-recited/10"}`}
-                      >
+                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : "bg-recited/10"}`}>
                         <div className="font-semibold">سبر الجزء {p.juz_number}</div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{p.probe_date}</span>
@@ -204,14 +211,38 @@ function StudentView() {
               </Card>
             </div>
           </TabsContent>
+
+          <TabsContent value="hadiths" className="pt-4">
+            <Card className="p-5">
+              <h2 className="mb-3 font-bold">الأربعين النووية (42 حديث)</h2>
+              <div className="flex flex-wrap items-center gap-3 text-xs mb-3">
+                <Legend className="bg-card border" label="لم يُسمَّع" />
+                <Legend className="bg-recited text-recited-foreground" label="مُسمَّع (السنة الحالية)" />
+                <Legend className="bg-archived text-archived-foreground" label="سنة سابقة" />
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {NAWAWI_HADITHS.map((h) => {
+                  const s = hadithStatus.get(h.number);
+                  return (
+                    <div key={h.number} className={cn(
+                      "rounded-md border px-3 py-2 text-sm",
+                      !s && "bg-card",
+                      s === "recited" && "bg-recited text-recited-foreground border-recited",
+                      s === "archived" && "bg-archived text-archived-foreground border-archived/70",
+                    )}>
+                      <span className="font-bold">{h.number}.</span> {h.title}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
         <DialogContent dir="rtl" className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>معلومات الطالب</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>معلومات الطالب</DialogTitle></DialogHeader>
           {infoLoading ? (
             <p className="py-6 text-center text-sm text-muted-foreground">جاري التحميل...</p>
           ) : !info ? (
@@ -224,12 +255,7 @@ function StudentView() {
                 <InfoRow label="اسم الأب" value={info.father_name} />
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
-                <InfoRow label="تاريخ الميلاد" value={info.birth_date} />
-                <InfoRow label="هاتف الطالب" value={info.student_phone} />
-                <InfoRow label="هاتف الأب" value={info.father_phone} />
-                <InfoRow label="هاتف الأم" value={info.mother_phone} />
-                <InfoRow label="عمل الأب" value={info.father_job} />
-                <InfoRow label="العنوان" value={info.address} full />
+                <InfoRow label="عام الميلاد" value={info.birth_year != null ? String(info.birth_year) : null} />
               </dl>
             </div>
           )}
@@ -239,11 +265,20 @@ function StudentView() {
   );
 }
 
-function InfoRow({ label, value, full }: { label: string; value: string | null; full?: boolean }) {
+function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className={full ? "sm:col-span-2" : undefined}>
+    <div>
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="font-medium">{value || "—"}</dd>
+    </div>
+  );
+}
+
+function Legend({ className, label }: { className?: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={cn("inline-block size-4 rounded border", className)} />
+      <span>{label}</span>
     </div>
   );
 }

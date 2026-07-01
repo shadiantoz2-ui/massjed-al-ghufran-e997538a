@@ -83,4 +83,5 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: "مدير",
   supervisor: "معلم مشرف",
   reciter: "معلم مقرئ",
+  halaqah: "معلم الحلقة",
 };

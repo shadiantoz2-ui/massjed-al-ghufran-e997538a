@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth, canManageStudents } from "@/lib/auth-context";
@@ -29,13 +32,14 @@ interface Student {
   nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
-  student_phone: string | null;
   father_phone: string | null;
   mother_phone: string | null;
+  contact_phone: string | null;
   address: string | null;
   father_job: string | null;
-  birth_date: string | null;
+  birth_year: number | null;
   grade_level: string | null;
+  teacher_id: string | null;
 }
 
 const EMPTY: Omit<Student, "id"> = {
@@ -43,28 +47,35 @@ const EMPTY: Omit<Student, "id"> = {
   nickname: "",
   father_name: "",
   mother_name: "",
-  student_phone: "",
   father_phone: "",
   mother_phone: "",
+  contact_phone: "",
   address: "",
   father_job: "",
-  birth_date: "",
+  birth_year: null,
   grade_level: "",
+  teacher_id: null,
 };
+
+interface TeacherOpt { user_id: string; full_name: string }
 
 function StudentsPage() {
   const { roles } = useAuth();
   const canManage = canManageStudents(roles);
   const [students, setStudents] = useState<Student[]>([]);
+  const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState<Omit<Student, "id">>(EMPTY);
 
   async function load() {
-    const { data } = await supabase
-      .from("students").select("*").order("full_name");
+    const [{ data }, { data: t }] = await Promise.all([
+      supabase.from("students").select("id, full_name, nickname, father_name, mother_name, father_phone, mother_phone, contact_phone, address, father_job, birth_year, grade_level, teacher_id").order("full_name"),
+      supabase.rpc("list_teachers"),
+    ]);
     setStudents((data ?? []) as Student[]);
+    setTeachers((t ?? []) as TeacherOpt[]);
   }
   useEffect(() => { load(); }, []);
 
@@ -80,38 +91,45 @@ function StudentsPage() {
       nickname: s.nickname ?? "",
       father_name: s.father_name ?? "",
       mother_name: s.mother_name ?? "",
-      student_phone: s.student_phone ?? "",
       father_phone: s.father_phone ?? "",
       mother_phone: s.mother_phone ?? "",
+      contact_phone: s.contact_phone ?? "",
       address: s.address ?? "",
       father_job: s.father_job ?? "",
-      birth_date: s.birth_date ?? "",
+      birth_year: s.birth_year ?? null,
       grade_level: s.grade_level ?? "",
+      teacher_id: s.teacher_id ?? null,
     });
     setOpen(true);
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const required: [string, string][] = [
+    const required: [keyof Omit<Student, "id">, string][] = [
       ["full_name", "اسم الطالب"],
       ["nickname", "كنية الطالب"],
       ["father_name", "اسم الأب"],
       ["mother_name", "اسم الأم"],
-      ["birth_date", "تاريخ الميلاد"],
-      ["student_phone", "رقم الطالب"],
+      ["birth_year", "عام الميلاد"],
       ["father_phone", "رقم الأب"],
       ["mother_phone", "رقم الأم"],
+      ["contact_phone", "رقم التواصل (واتساب)"],
       ["father_job", "عمل الأب"],
       ["grade_level", "المرحلة الدراسية"],
       ["address", "عنوان السكن"],
+      ["teacher_id", "الأستاذ في الحلقة"],
     ];
     for (const [k, label] of required) {
-      if (!String((form as any)[k] ?? "").trim()) {
+      const v = (form as any)[k];
+      if (v === null || v === undefined || String(v).trim() === "") {
         return toast.error(`الحقل مطلوب: ${label}`);
       }
     }
-    const payload = { ...form };
+    const yr = Number(form.birth_year);
+    if (!yr || yr < 1900 || yr > new Date().getFullYear()) {
+      return toast.error("عام الميلاد غير صحيح");
+    }
+    const payload = { ...form, birth_year: yr };
     if (editing) {
       const { error } = await supabase.from("students").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -169,28 +187,41 @@ function StudentsPage() {
                     <Input value={form.mother_name ?? ""} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} required />
                   </Field>
                 </div>
-                <Field label="تاريخ الميلاد *">
-                  <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} required />
-                </Field>
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label="رقم الطالب *">
-                    <Input dir="ltr" value={form.student_phone ?? ""} onChange={(e) => setForm({ ...form, student_phone: e.target.value })} required />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="عام الميلاد *">
+                    <Input type="number" min={1900} max={new Date().getFullYear()} placeholder="مثال: 2012"
+                      value={form.birth_year ?? ""}
+                      onChange={(e) => setForm({ ...form, birth_year: e.target.value ? Number(e.target.value) : null })}
+                      required />
                   </Field>
+                  <Field label="المرحلة الدراسية *">
+                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} required />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
                   <Field label="رقم الأب *">
                     <Input dir="ltr" value={form.father_phone ?? ""} onChange={(e) => setForm({ ...form, father_phone: e.target.value })} required />
                   </Field>
                   <Field label="رقم الأم *">
                     <Input dir="ltr" value={form.mother_phone ?? ""} onChange={(e) => setForm({ ...form, mother_phone: e.target.value })} required />
                   </Field>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="عمل الأب *">
-                    <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} required />
-                  </Field>
-                  <Field label="المرحلة الدراسية *">
-                    <Input placeholder="مثال: الصف الخامس" value={form.grade_level ?? ""} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} required />
+                  <Field label="رقم التواصل (واتساب) *">
+                    <Input dir="ltr" value={form.contact_phone ?? ""} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} required />
                   </Field>
                 </div>
+                <Field label="عمل الأب *">
+                  <Input value={form.father_job ?? ""} onChange={(e) => setForm({ ...form, father_job: e.target.value })} required />
+                </Field>
+                <Field label="الأستاذ في الحلقة *">
+                  <Select value={form.teacher_id ?? ""} onValueChange={(v) => setForm({ ...form, teacher_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="اختر الأستاذ" /></SelectTrigger>
+                    <SelectContent>
+                      {teachers.map((t) => (
+                        <SelectItem key={t.user_id} value={t.user_id}>{t.full_name || "—"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="عنوان السكن *">
                   <Textarea rows={2} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
                 </Field>
@@ -212,11 +243,11 @@ function StudentsPage() {
               <div>
                 <h3 className="font-bold">{s.full_name}{s.father_name ? ` ${s.father_name}` : ""}{s.nickname ? ` ${s.nickname}` : ""}</h3>
                 {s.grade_level && <p className="text-xs text-muted-foreground">المرحلة: {s.grade_level}</p>}
-                {s.birth_date && <p className="text-xs text-muted-foreground">مواليد: {s.birth_date}</p>}
+                {s.birth_year && <p className="text-xs text-muted-foreground">مواليد: {s.birth_year}</p>}
               </div>
             </div>
-            {s.father_phone && (
-              <p className="mt-2 text-xs text-muted-foreground" dir="ltr">📞 {s.father_phone}</p>
+            {s.contact_phone && (
+              <p className="mt-2 text-xs text-muted-foreground" dir="ltr">📞 {s.contact_phone}</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild size="sm" variant="default">

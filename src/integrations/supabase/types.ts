@@ -32,6 +32,53 @@ export type Database = {
         }
         Relationships: []
       }
+      hadith_recitations: {
+        Row: {
+          academic_year: number
+          archived: boolean
+          created_at: string
+          grade: string | null
+          hadith_number: number
+          id: string
+          notes: string | null
+          recitation_date: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          academic_year: number
+          archived?: boolean
+          created_at?: string
+          grade?: string | null
+          hadith_number: number
+          id?: string
+          notes?: string | null
+          recitation_date?: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          academic_year?: number
+          archived?: boolean
+          created_at?: string
+          grade?: string | null
+          hadith_number?: number
+          id?: string
+          notes?: string | null
+          recitation_date?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hadith_recitations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       probes: {
         Row: {
           academic_year: number | null
@@ -165,7 +212,8 @@ export type Database = {
       students: {
         Row: {
           address: string | null
-          birth_date: string | null
+          birth_year: number | null
+          contact_phone: string | null
           created_at: string
           created_by: string | null
           father_job: string | null
@@ -177,11 +225,12 @@ export type Database = {
           mother_name: string | null
           mother_phone: string | null
           nickname: string | null
-          student_phone: string | null
+          teacher_id: string | null
         }
         Insert: {
           address?: string | null
-          birth_date?: string | null
+          birth_year?: number | null
+          contact_phone?: string | null
           created_at?: string
           created_by?: string | null
           father_job?: string | null
@@ -193,11 +242,12 @@ export type Database = {
           mother_name?: string | null
           mother_phone?: string | null
           nickname?: string | null
-          student_phone?: string | null
+          teacher_id?: string | null
         }
         Update: {
           address?: string | null
-          birth_date?: string | null
+          birth_year?: number | null
+          contact_phone?: string | null
           created_at?: string
           created_by?: string | null
           father_job?: string | null
@@ -209,7 +259,7 @@ export type Database = {
           mother_name?: string | null
           mother_phone?: string | null
           nickname?: string | null
-          student_phone?: string | null
+          teacher_id?: string | null
         }
         Relationships: []
       }
@@ -244,6 +294,19 @@ export type Database = {
         Returns: {
           full_name: string
           id: string
+        }[]
+      }
+      get_student_hadiths: {
+        Args: { _student_id: string }
+        Returns: {
+          academic_year: number
+          archived: boolean
+          grade: string
+          hadith_number: number
+          id: string
+          notes: string
+          recitation_date: string
+          teacher_id: string
         }[]
       }
       get_student_probes: {
@@ -281,6 +344,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_halaqah_teacher_of: {
+        Args: { _student_id: string; _uid: string }
+        Returns: boolean
+      }
+      list_teachers: {
+        Args: never
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       search_students_by_name: {
         Args: { _query: string }
         Returns: {
@@ -293,7 +367,7 @@ export type Database = {
       start_new_academic_year: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "supervisor" | "reciter"
+      app_role: "admin" | "supervisor" | "reciter" | "halaqah"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -421,7 +495,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "supervisor", "reciter"],
+      app_role: ["admin", "supervisor", "reciter", "halaqah"],
     },
   },
 } as const
