@@ -124,14 +124,17 @@ function RecitePage() {
   const [info, setInfo] = useState<StudentInfo | null>(null);
 
   async function load() {
-    const [{ data: s }, { data: r }, { data: p }] = await Promise.all([
-      supabase.from("students").select("full_name, nickname, father_name").eq("id", studentId).maybeSingle(),
+    const [{ data: s }, { data: r }, { data: p }, { data: h }] = await Promise.all([
+      supabase.from("students").select("full_name, nickname, father_name, teacher_id").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
       supabase.from("probes").select("*").eq("student_id", studentId).order("probe_date", { ascending: false }),
+      supabase.from("hadith_recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
     ]);
     setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}${s.nickname ? ` ${s.nickname}` : ""}` : "");
+    setStudentTeacherId(s?.teacher_id ?? null);
     setRecs((r ?? []) as FullRecitation[]);
     setProbes((p ?? []) as FullProbe[]);
+    setHadiths((h ?? []) as FullHadith[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, [studentId]);
