@@ -52,13 +52,24 @@ interface StudentInfo {
   nickname: string | null;
   father_name: string | null;
   mother_name: string | null;
-  student_phone: string | null;
   father_phone: string | null;
   mother_phone: string | null;
+  contact_phone: string | null;
   address: string | null;
   father_job: string | null;
-  birth_date: string | null;
+  birth_year: number | null;
   grade_level: string | null;
+  teacher_id: string | null;
+}
+
+interface FullHadith {
+  id: string;
+  hadith_number: number;
+  teacher_id: string;
+  grade: string | null;
+  notes: string | null;
+  recitation_date: string;
+  archived: boolean;
 }
 
 function RecitePage() {
