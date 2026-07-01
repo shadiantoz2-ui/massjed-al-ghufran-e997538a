@@ -82,6 +82,14 @@ function RecitePage() {
   const [probes, setProbes] = useState<FullProbe[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [studentTeacherId, setStudentTeacherId] = useState<string | null>(null);
+  const [hadiths, setHadiths] = useState<FullHadith[]>([]);
+  const [hadithOpen, setHadithOpen] = useState(false);
+  const [hadithNum, setHadithNum] = useState<number | "">("");
+  const [hadithGrade, setHadithGrade] = useState("excellent");
+  const [hadithNotes, setHadithNotes] = useState("");
+  const [hadithDate, setHadithDate] = useState<string>(new Date().toISOString().slice(0, 10));
+
   // single recitation dialog
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FullRecitation | null>(null);
