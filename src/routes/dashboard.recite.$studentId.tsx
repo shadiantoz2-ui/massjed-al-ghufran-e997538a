@@ -298,8 +298,36 @@ function RecitePage() {
     load();
   }
 
+  const canHalaqahHere = roles.includes("halaqah") && studentTeacherId === user?.id;
   function canModify(r: FullRecitation) {
     return canEditAll || r.teacher_id === user?.id;
+  }
+
+  async function saveHadith(e: React.FormEvent) {
+    e.preventDefault();
+    if (!hadithNum) return toast.error("اختر رقم الحديث");
+    const dup = hadiths.find((h) => !h.archived && h.hadith_number === Number(hadithNum));
+    if (dup) {
+      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً في هذه السنة — لم يُضَف.`);
+      setHadithOpen(false);
+      return;
+    }
+    const { error } = await supabase.from("hadith_recitations").insert({
+      student_id: studentId, teacher_id: user!.id,
+      hadith_number: Number(hadithNum), grade: hadithGrade,
+      notes: hadithNotes || null, recitation_date: hadithDate,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم تسجيل الحديث");
+    setHadithOpen(false);
+    load();
+  }
+  async function removeHadith(id: string) {
+    if (!confirm("حذف هذا الحديث؟")) return;
+    const { error } = await supabase.from("hadith_recitations").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
   }
 
   // ========= Probes =========
@@ -376,6 +404,7 @@ function RecitePage() {
         <TabsList className="w-full">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
           <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
+          <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
         </TabsList>
 
         {/* ====== Recitations section ====== */}
