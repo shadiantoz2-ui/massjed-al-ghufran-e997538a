@@ -18,6 +18,7 @@ import { useAuth, canEditAnyRecitation } from "@/lib/auth-context";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
+import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { toast } from "sonner";
 import { ArrowRight, Pencil, Trash2, Layers, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -522,7 +523,85 @@ function RecitePage() {
             )}
           </Card>
         </TabsContent>
+
+        {/* ====== Hadiths section ====== */}
+        <TabsContent value="hadiths" className="space-y-4 pt-3">
+          <Card className="p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
+              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
+                <Layers className="size-4" /> تسجيل حديث
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {NAWAWI_HADITHS.map((h) => {
+                const recs = hadiths.filter((x) => x.hadith_number === h.number);
+                const current = recs.find((x) => !x.archived);
+                const archived = !current && recs.some((x) => x.archived);
+                return (
+                  <div key={h.number} className={cn(
+                    "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
+                    !current && !archived && "bg-card",
+                    current && "bg-recited text-recited-foreground border-recited",
+                    archived && "bg-archived text-archived-foreground border-archived/70",
+                  )}>
+                    <span><span className="font-bold">{h.number}.</span> {h.title}</span>
+                    {current && (canEditAll || current.teacher_id === user?.id || canHalaqahHere) && (
+                      <button onClick={() => removeHadith(current.id)} className="opacity-70 hover:opacity-100">
+                        <Trash2 className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Hadith dialog */}
+      <Dialog open={hadithOpen} onOpenChange={setHadithOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تسجيل حديث</DialogTitle></DialogHeader>
+          <form onSubmit={saveHadith} className="space-y-3">
+            <div>
+              <Label>الحديث</Label>
+              <Select value={hadithNum ? String(hadithNum) : ""} onValueChange={(v) => setHadithNum(Number(v))}>
+                <SelectTrigger><SelectValue placeholder="اختر الحديث" /></SelectTrigger>
+                <SelectContent>
+                  {NAWAWI_HADITHS.map((h) => (
+                    <SelectItem key={h.number} value={String(h.number)}>{h.number}. {h.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>التاريخ</Label>
+                <Input type="date" value={hadithDate} onChange={(e) => setHadithDate(e.target.value)} required />
+              </div>
+              <div>
+                <Label>التقييم</Label>
+                <Select value={hadithGrade} onValueChange={setHadithGrade}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(GRADE_LABELS).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>ملاحظات</Label>
+              <Textarea rows={2} value={hadithNotes} onChange={(e) => setHadithNotes(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button type="submit">تسجيل</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Single recitation dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
