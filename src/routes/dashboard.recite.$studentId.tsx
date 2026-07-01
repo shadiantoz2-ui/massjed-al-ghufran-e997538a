@@ -312,11 +312,12 @@ function RecitePage() {
       setHadithOpen(false);
       return;
     }
-    const { error } = await supabase.from("hadith_recitations").insert({
+    const payload: any = {
       student_id: studentId, teacher_id: user!.id,
       hadith_number: Number(hadithNum), grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
-    });
+    };
+    const { error } = await supabase.from("hadith_recitations").insert(payload);
     if (error) return toast.error(error.message);
     toast.success("تم تسجيل الحديث");
     setHadithOpen(false);
