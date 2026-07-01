@@ -31,7 +31,7 @@ const createSchema = z.object({
   full_name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(["supervisor", "reciter"]),
+  role: z.enum(["supervisor", "reciter", "halaqah"]),
 });
 
 export const createTeacherAccount = createServerFn({ method: "POST" })
