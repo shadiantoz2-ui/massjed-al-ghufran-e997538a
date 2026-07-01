@@ -701,10 +701,10 @@ function RecitePage() {
                 <InfoRow label="اسم الأب" value={info.father_name} />
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
-                <InfoRow label="تاريخ الميلاد" value={info.birth_date} />
-                <InfoRow label="هاتف الطالب" value={info.student_phone} />
+                <InfoRow label="عام الميلاد" value={info.birth_year != null ? String(info.birth_year) : null} />
                 <InfoRow label="هاتف الأب" value={info.father_phone} />
                 <InfoRow label="هاتف الأم" value={info.mother_phone} />
+                <InfoRow label="رقم التواصل (واتساب)" value={info.contact_phone} />
                 <InfoRow label="عمل الأب" value={info.father_job} />
                 <InfoRow label="العنوان" value={info.address} full />
               </dl>
