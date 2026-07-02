@@ -17,7 +17,7 @@ import { ROLE_LABELS } from "@/lib/quran-data";
 import { toast } from "sonner";
 import { Plus, Trash2, ShieldAlert, KeyRound, Pencil } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { resetTeacherPassword, createTeacherAccount, updateTeacherAccount } from "@/lib/admin-users.functions";
+import { resetTeacherPassword, createTeacherAccount, updateTeacherAccount, deleteTeacherAccount } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
@@ -55,6 +55,20 @@ function TeachersPage() {
   const resetPwd = useServerFn(resetTeacherPassword);
   const createTeacherFn = useServerFn(createTeacherAccount);
   const updateTeacherFn = useServerFn(updateTeacherAccount);
+  const deleteTeacherFn = useServerFn(deleteTeacherAccount);
+
+  async function deleteTeacher(t: TeacherRow) {
+    if (t.user_id === user?.id) return toast.error("لا يمكنك حذف حسابك بنفسك");
+    if (!confirm(`تأكيد حذف حساب المعلم "${t.full_name || t.username}" نهائياً؟`)) return;
+    try {
+      await deleteTeacherFn({ data: { user_id: t.user_id } });
+      toast.success("تم حذف الحساب");
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "تعذر الحذف");
+    }
+  }
+
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -224,10 +238,16 @@ function TeachersPage() {
                 <Pencil className="size-3.5" /> تعديل البيانات
               </Button>
               {t.user_id !== user?.id && (
-                <Button size="sm" variant="outline" onClick={() => openReset(t)}>
-                  <KeyRound className="size-3.5" /> تغيير كلمة المرور
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={() => openReset(t)}>
+                    <KeyRound className="size-3.5" /> تغيير كلمة المرور
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteTeacher(t)}>
+                    <Trash2 className="size-3.5" /> حذف الحساب
+                  </Button>
+                </>
               )}
+
             </div>
           </Card>
         ))}

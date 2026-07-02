@@ -38,7 +38,9 @@ interface FullRecitation extends RecitationLite {
   notes: string | null;
   recitation_date: string;
   academic_year: number;
+  recitation_type?: string | null;
 }
+
 
 interface FullProbe extends ProbeLite {
   teacher_id?: string;
@@ -100,6 +102,8 @@ function RecitePage() {
   const [grade, setGrade] = useState<string>("excellent");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [recType, setRecType] = useState<"new" | "old">("new");
+
 
   // bulk add dialog
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -110,6 +114,8 @@ function RecitePage() {
   const [bulkGrade, setBulkGrade] = useState("excellent");
   const [bulkNotes, setBulkNotes] = useState("");
   const [bulkDate, setBulkDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [bulkType, setBulkType] = useState<"new" | "old">("new");
+
   const [saving, setSaving] = useState(false);
 
   // probe dialog
@@ -155,6 +161,7 @@ function RecitePage() {
     setGrade("excellent");
     setNotes("");
     setDate(new Date().toISOString().slice(0, 10));
+    setRecType("new");
     setOpen(true);
   }
   function openEdit(r: FullRecitation) {
@@ -165,8 +172,10 @@ function RecitePage() {
     setGrade(r.grade ?? "excellent");
     setNotes(r.notes ?? "");
     setDate(r.recitation_date);
+    setRecType((r.recitation_type as "new" | "old") ?? "new");
     setOpen(true);
   }
+
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -200,7 +209,9 @@ function RecitePage() {
       grade,
       notes: notes || null,
       recitation_date: date,
+      recitation_type: canEditAll ? recType : "new",
     };
+
     if (editing) {
       const { error } = await supabase.from("recitations").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -222,8 +233,10 @@ function RecitePage() {
     setBulkGrade("excellent");
     setBulkNotes("");
     setBulkDate(new Date().toISOString().slice(0, 10));
+    setBulkType("new");
     setBulkOpen(true);
   }
+
 
   function toggleSurah(n: number) {
     setSelectedSurahs((prev) => {
@@ -253,6 +266,7 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "page",
           page_number: p, surah_number: null, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
+          recitation_type: canEditAll ? bulkType : "new",
         });
       }
     } else {
@@ -267,7 +281,9 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "surah",
           page_number: null, surah_number: n, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
+          recitation_type: canEditAll ? bulkType : "new",
         });
+
       }
     }
 
@@ -442,11 +458,22 @@ function RecitePage() {
                     {recs.map((r) => (
                       <li key={r.id} className="py-3 flex items-center justify-between gap-3">
                         <div>
-                          <div className="font-semibold">
-                            {r.kind === "page"
-                              ? `صفحة ${r.page_number} (الجزء ${pageToJuz(r.page_number!)})`
-                              : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}`}
+                          <div className="font-semibold flex items-center gap-2 flex-wrap">
+                            <span>
+                              {r.kind === "page"
+                                ? `صفحة ${r.page_number} (الجزء ${pageToJuz(r.page_number!)})`
+                                : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}`}
+                            </span>
+                            <span className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                              (r.recitation_type ?? "new") === "old"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                : "bg-primary/15 text-primary",
+                            )}>
+                              {(r.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
+                            </span>
                           </div>
+
                           <div className="text-xs text-muted-foreground">
                             {r.recitation_date} • {r.grade ? GRADE_LABELS[r.grade] : ""}
                             {r.archived && " • أرشيف"}
@@ -656,6 +683,19 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {canEditAll && (
+              <div>
+                <Label>نوع التسميع</Label>
+                <Select value={recType} onValueChange={(v) => setRecType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -748,6 +788,19 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {canEditAll && (
+              <div>
+                <Label>نوع التسميعات</Label>
+                <Select value={bulkType} onValueChange={(v) => setBulkType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label>ملاحظات (تُطبَّق على كل التسميعات)</Label>
               <Textarea rows={2} value={bulkNotes} onChange={(e) => setBulkNotes(e.target.value)} />
