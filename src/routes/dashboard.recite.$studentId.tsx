@@ -233,8 +233,10 @@ function RecitePage() {
     setBulkGrade("excellent");
     setBulkNotes("");
     setBulkDate(new Date().toISOString().slice(0, 10));
+    setBulkType("new");
     setBulkOpen(true);
   }
+
 
   function toggleSurah(n: number) {
     setSelectedSurahs((prev) => {
