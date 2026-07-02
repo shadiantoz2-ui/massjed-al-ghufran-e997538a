@@ -38,7 +38,9 @@ interface FullRecitation extends RecitationLite {
   notes: string | null;
   recitation_date: string;
   academic_year: number;
+  recitation_type?: string | null;
 }
+
 
 interface FullProbe extends ProbeLite {
   teacher_id?: string;
