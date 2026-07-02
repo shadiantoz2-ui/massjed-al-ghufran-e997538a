@@ -114,6 +114,8 @@ function RecitePage() {
   const [bulkGrade, setBulkGrade] = useState("excellent");
   const [bulkNotes, setBulkNotes] = useState("");
   const [bulkDate, setBulkDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [bulkType, setBulkType] = useState<"new" | "old">("new");
+
   const [saving, setSaving] = useState(false);
 
   // probe dialog
