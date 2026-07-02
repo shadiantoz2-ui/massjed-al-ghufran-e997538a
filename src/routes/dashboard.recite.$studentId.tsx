@@ -102,6 +102,8 @@ function RecitePage() {
   const [grade, setGrade] = useState<string>("excellent");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [recType, setRecType] = useState<"new" | "old">("new");
+
 
   // bulk add dialog
   const [bulkOpen, setBulkOpen] = useState(false);
