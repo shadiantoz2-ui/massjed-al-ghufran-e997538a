@@ -107,3 +107,23 @@ export const updateTeacherAccount = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const deleteSchema = z.object({ user_id: z.string().uuid() });
+
+export const deleteTeacherAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => deleteSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    if (data.user_id === context.userId) throw new Error("لا يمكنك حذف حسابك بنفسك");
+    const { data: rolesRows, error: rolesErr } = await context.supabase
+      .from("user_roles").select("role").eq("user_id", context.userId);
+    if (rolesErr) throw new Error(rolesErr.message);
+    const isAdmin = (rolesRows ?? []).some((r) => r.role === "admin");
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
