@@ -209,7 +209,9 @@ function RecitePage() {
       grade,
       notes: notes || null,
       recitation_date: date,
+      recitation_type: canEditAll ? recType : "new",
     };
+
     if (editing) {
       const { error } = await supabase.from("recitations").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
