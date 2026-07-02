@@ -458,11 +458,22 @@ function RecitePage() {
                     {recs.map((r) => (
                       <li key={r.id} className="py-3 flex items-center justify-between gap-3">
                         <div>
-                          <div className="font-semibold">
-                            {r.kind === "page"
-                              ? `صفحة ${r.page_number} (الجزء ${pageToJuz(r.page_number!)})`
-                              : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}`}
+                          <div className="font-semibold flex items-center gap-2 flex-wrap">
+                            <span>
+                              {r.kind === "page"
+                                ? `صفحة ${r.page_number} (الجزء ${pageToJuz(r.page_number!)})`
+                                : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name}`}
+                            </span>
+                            <span className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                              (r.recitation_type ?? "new") === "old"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                : "bg-primary/15 text-primary",
+                            )}>
+                              {(r.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
+                            </span>
                           </div>
+
                           <div className="text-xs text-muted-foreground">
                             {r.recitation_date} • {r.grade ? GRADE_LABELS[r.grade] : ""}
                             {r.archived && " • أرشيف"}
