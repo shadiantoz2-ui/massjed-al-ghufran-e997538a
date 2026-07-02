@@ -60,8 +60,9 @@ const EMPTY: Omit<Student, "id"> = {
 interface TeacherOpt { user_id: string; full_name: string }
 
 function StudentsPage() {
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const canManage = canManageStudents(roles);
+  const isHalaqahOnly = roles.includes("halaqah") && !roles.includes("admin") && !roles.includes("supervisor") && !roles.includes("reciter");
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
   const [query, setQuery] = useState("");
@@ -70,14 +71,17 @@ function StudentsPage() {
   const [form, setForm] = useState<Omit<Student, "id">>(EMPTY);
 
   async function load() {
+    let q = supabase.from("students").select("id, full_name, nickname, father_name, mother_name, father_phone, mother_phone, contact_phone, address, father_job, birth_year, grade_level, teacher_id").order("full_name");
+    if (isHalaqahOnly && user?.id) q = q.eq("teacher_id", user.id);
     const [{ data }, { data: t }] = await Promise.all([
-      supabase.from("students").select("id, full_name, nickname, father_name, mother_name, father_phone, mother_phone, contact_phone, address, father_job, birth_year, grade_level, teacher_id").order("full_name"),
+      q,
       supabase.rpc("list_teachers"),
     ]);
     setStudents((data ?? []) as Student[]);
     setTeachers((t ?? []) as TeacherOpt[]);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isHalaqahOnly, user?.id]);
+
 
   function openCreate() {
     setEditing(null);
