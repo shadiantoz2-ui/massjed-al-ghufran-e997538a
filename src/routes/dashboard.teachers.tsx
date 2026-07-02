@@ -55,6 +55,20 @@ function TeachersPage() {
   const resetPwd = useServerFn(resetTeacherPassword);
   const createTeacherFn = useServerFn(createTeacherAccount);
   const updateTeacherFn = useServerFn(updateTeacherAccount);
+  const deleteTeacherFn = useServerFn(deleteTeacherAccount);
+
+  async function deleteTeacher(t: TeacherRow) {
+    if (t.user_id === user?.id) return toast.error("لا يمكنك حذف حسابك بنفسك");
+    if (!confirm(`تأكيد حذف حساب المعلم "${t.full_name || t.username}" نهائياً؟`)) return;
+    try {
+      await deleteTeacherFn({ data: { user_id: t.user_id } });
+      toast.success("تم حذف الحساب");
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "تعذر الحذف");
+    }
+  }
+
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
