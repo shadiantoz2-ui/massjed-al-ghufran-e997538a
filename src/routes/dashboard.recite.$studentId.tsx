@@ -683,6 +683,19 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {canEditAll && (
+              <div>
+                <Label>نوع التسميع</Label>
+                <Select value={recType} onValueChange={(v) => setRecType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
