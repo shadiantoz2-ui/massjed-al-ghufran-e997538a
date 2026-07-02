@@ -238,10 +238,16 @@ function TeachersPage() {
                 <Pencil className="size-3.5" /> تعديل البيانات
               </Button>
               {t.user_id !== user?.id && (
-                <Button size="sm" variant="outline" onClick={() => openReset(t)}>
-                  <KeyRound className="size-3.5" /> تغيير كلمة المرور
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={() => openReset(t)}>
+                    <KeyRound className="size-3.5" /> تغيير كلمة المرور
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteTeacher(t)}>
+                    <Trash2 className="size-3.5" /> حذف الحساب
+                  </Button>
+                </>
               )}
+
             </div>
           </Card>
         ))}
