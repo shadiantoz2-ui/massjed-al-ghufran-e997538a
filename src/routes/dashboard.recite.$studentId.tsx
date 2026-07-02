@@ -161,6 +161,7 @@ function RecitePage() {
     setGrade("excellent");
     setNotes("");
     setDate(new Date().toISOString().slice(0, 10));
+    setRecType("new");
     setOpen(true);
   }
   function openEdit(r: FullRecitation) {
@@ -171,8 +172,10 @@ function RecitePage() {
     setGrade(r.grade ?? "excellent");
     setNotes(r.notes ?? "");
     setDate(r.recitation_date);
+    setRecType((r.recitation_type as "new" | "old") ?? "new");
     setOpen(true);
   }
+
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
