@@ -266,6 +266,7 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "page",
           page_number: p, surah_number: null, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
+          recitation_type: canEditAll ? bulkType : "new",
         });
       }
     } else {
@@ -280,7 +281,9 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "surah",
           page_number: null, surah_number: n, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
+          recitation_type: canEditAll ? bulkType : "new",
         });
+
       }
     }
 
