@@ -788,6 +788,19 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {canEditAll && (
+              <div>
+                <Label>نوع التسميعات</Label>
+                <Select value={bulkType} onValueChange={(v) => setBulkType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label>ملاحظات (تُطبَّق على كل التسميعات)</Label>
               <Textarea rows={2} value={bulkNotes} onChange={(e) => setBulkNotes(e.target.value)} />
