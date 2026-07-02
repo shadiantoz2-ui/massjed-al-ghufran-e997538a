@@ -162,6 +162,7 @@ export type Database = {
           notes: string | null
           page_number: number | null
           recitation_date: string
+          recitation_type: string
           student_id: string
           surah_number: number | null
           teacher_id: string
@@ -178,6 +179,7 @@ export type Database = {
           notes?: string | null
           page_number?: number | null
           recitation_date?: string
+          recitation_type?: string
           student_id: string
           surah_number?: number | null
           teacher_id: string
@@ -194,6 +196,7 @@ export type Database = {
           notes?: string | null
           page_number?: number | null
           recitation_date?: string
+          recitation_type?: string
           student_id?: string
           surah_number?: number | null
           teacher_id?: string
@@ -333,6 +336,7 @@ export type Database = {
           notes: string
           page_number: number
           recitation_date: string
+          recitation_type: string
           surah_number: number
           to_ayah: number
         }[]
