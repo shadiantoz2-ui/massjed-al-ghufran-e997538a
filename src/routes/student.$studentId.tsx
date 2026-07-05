@@ -53,6 +53,7 @@ function StudentView() {
   const [full, setFull] = useState<any[]>([]);
   const [probes, setProbes] = useState<ProbeRow[]>([]);
   const [hadiths, setHadiths] = useState<HadithRow[]>([]);
+  const [totalPoints, setTotalPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   const [infoOpen, setInfoOpen] = useState(false);
@@ -61,17 +62,19 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
         supabase.rpc("get_student_probes", { _student_id: studentId }),
         supabase.rpc("get_student_hadiths", { _student_id: studentId }),
+        supabase.rpc("get_student_total_points", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
       setProbes((pr ?? []) as ProbeRow[]);
       setHadiths((hd ?? []) as HadithRow[]);
+      setTotalPoints(typeof pts === "number" ? pts : 0);
       setLoading(false);
     })();
   }, [studentId]);
@@ -146,7 +149,18 @@ function StudentView() {
               </Button>
             )}
           </div>
+          <div className="mt-4 rounded-lg border bg-primary/5 p-4 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-muted-foreground">مجموع النقاط</div>
+              <div className="text-3xl font-black text-primary">{totalPoints}</div>
+            </div>
+            <div className="text-xs text-muted-foreground text-left">
+              4 نقاط / صفحة جديدة<br/>
+              4 حضور • 2 حضور متأخر
+            </div>
+          </div>
         </Card>
+
 
         <Tabs defaultValue="recitations" className="mt-6">
           <TabsList className="w-full">
@@ -164,12 +178,17 @@ function StudentView() {
                   <p className="text-sm text-muted-foreground">لا توجد تسميعات بعد.</p>
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {full.map((r) => (
-                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}>
-                        <div className="font-semibold">
-                          {r.kind === "page"
+                    {full.map((r) => {
+                      const isOld = (r.recitation_type ?? "new") === "old";
+                      return (
+                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                        <div className="font-semibold flex items-center gap-2 flex-wrap">
+                          <span>{r.kind === "page"
                             ? `صفحة ${r.page_number}`
-                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}
+                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}</span>
+                          {isOld && !r.archived && (
+                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{r.recitation_date}</span>
@@ -177,7 +196,8 @@ function StudentView() {
                         </div>
                         {r.notes && <div className="mt-1 text-xs">{r.notes}</div>}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </Card>

@@ -20,7 +20,7 @@ import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
 import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { toast } from "sonner";
-import { ArrowRight, Pencil, Trash2, Layers, Info } from "lucide-react";
+import { ArrowRight, Pencil, Trash2, Layers, Info, Award, CalendarCheck, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
@@ -130,18 +130,39 @@ function RecitePage() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [info, setInfo] = useState<StudentInfo | null>(null);
 
+  // probe/hadith points input
+  const [probePoints, setProbePoints] = useState<number | "">("");
+  const [hadithPoints, setHadithPoints] = useState<number | "">("");
+
+  // points state
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [pointEvents, setPointEvents] = useState<any[]>([]);
+  const [manualPoints, setManualPoints] = useState<number | "">("");
+  const [manualReason, setManualReason] = useState("");
+
+  // attendance state
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [attDate, setAttDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [attStatus, setAttStatus] = useState<"present" | "late">("present");
+
   async function load() {
-    const [{ data: s }, { data: r }, { data: p }, { data: h }] = await Promise.all([
+    const [{ data: s }, { data: r }, { data: p }, { data: h }, { data: tp }, { data: pe }, { data: att }] = await Promise.all([
       supabase.from("students").select("full_name, nickname, father_name, teacher_id").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
       supabase.from("probes").select("*").eq("student_id", studentId).order("probe_date", { ascending: false }),
       supabase.from("hadith_recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
+      supabase.rpc("get_student_total_points", { _student_id: studentId }),
+      supabase.rpc("get_student_point_events", { _student_id: studentId }),
+      supabase.rpc("get_student_attendance", { _student_id: studentId }),
     ]);
     setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}${s.nickname ? ` ${s.nickname}` : ""}` : "");
     setStudentTeacherId(s?.teacher_id ?? null);
     setRecs((r ?? []) as FullRecitation[]);
     setProbes((p ?? []) as FullProbe[]);
     setHadiths((h ?? []) as FullHadith[]);
+    setTotalPoints(typeof tp === "number" ? tp : 0);
+    setPointEvents((pe ?? []) as any[]);
+    setAttendance((att ?? []) as any[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, [studentId]);
@@ -333,6 +354,7 @@ function RecitePage() {
       student_id: studentId, teacher_id: user!.id,
       hadith_number: Number(hadithNum), grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
+      points: hadithPoints === "" ? 0 : Number(hadithPoints),
     };
     const { error } = await supabase.from("hadith_recitations").insert(payload);
     if (error) return toast.error(error.message);
@@ -355,6 +377,7 @@ function RecitePage() {
     setProbeGrade("excellent");
     setProbeNotes("");
     setProbeDate(new Date().toISOString().slice(0, 10));
+    setProbePoints("");
     setProbeOpen(true);
   }
   function openEditProbe(p: FullProbe) {
@@ -363,6 +386,7 @@ function RecitePage() {
     setProbeGrade(p.grade ?? "excellent");
     setProbeNotes(p.notes ?? "");
     setProbeDate(p.probe_date);
+    setProbePoints((p as any).points ?? "");
     setProbeOpen(true);
   }
   async function saveProbe(e: React.FormEvent) {
@@ -383,6 +407,7 @@ function RecitePage() {
       grade: probeGrade,
       notes: probeNotes || null,
       probe_date: probeDate,
+      points: probePoints === "" ? 0 : Number(probePoints),
     };
     if (editingProbe) {
       const { error } = await supabase.from("probes").update(payload).eq("id", editingProbe.id);
@@ -404,6 +429,57 @@ function RecitePage() {
     load();
   }
 
+  // ========= Points & Attendance =========
+  const canAdjustPoints = canEditAll || canHalaqahHere;
+  const canManageAttendance = canEditAll;
+  const isHalaqahTeacher = roles.includes("halaqah");
+
+  async function addManualPoints(sign: 1 | -1) {
+    if (!manualPoints || Number(manualPoints) <= 0) return toast.error("أدخل عدد النقاط");
+    const pts = sign * Number(manualPoints);
+    const { error } = await supabase.from("point_events").insert({
+      student_id: studentId,
+      points: pts,
+      source: "manual",
+      reason: manualReason || (sign > 0 ? "إضافة يدوية" : "خصم يدوي"),
+      created_by: user!.id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(sign > 0 ? "تمت الإضافة" : "تم الخصم");
+    setManualPoints("");
+    setManualReason("");
+    load();
+  }
+
+  async function removePointEvent(id: string) {
+    if (!confirm("حذف هذه الحركة؟")) return;
+    const { error } = await supabase.from("point_events").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
+  }
+
+  async function addAttendance(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from("attendance").insert({
+      student_id: studentId,
+      attendance_date: attDate,
+      status: attStatus,
+      created_by: user!.id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم تسجيل الحضور");
+    load();
+  }
+
+  async function removeAttendance(id: string) {
+    if (!confirm("حذف هذا الحضور؟")) return;
+    const { error } = await supabase.from("attendance").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
+  }
+
   if (loading) return <p className="text-center py-10">جاري التحميل...</p>;
 
   return (
@@ -413,16 +489,25 @@ function RecitePage() {
           <Button asChild variant="ghost" size="sm"><Link to="/dashboard/students"><ArrowRight className="size-4" /> الطلاب</Link></Button>
           <h1 className="text-xl font-bold">{name}</h1>
         </div>
-        <Button variant="outline" size="sm" onClick={openInfo}>
-          <Info className="size-4" /> معلومات الطالب
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-primary/10 px-3 py-1.5 text-sm font-bold text-primary flex items-center gap-1.5">
+            <Award className="size-4" /> {totalPoints} نقطة
+          </div>
+          <Button variant="outline" size="sm" onClick={openInfo}>
+            <Info className="size-4" /> معلومات الطالب
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="recitations">
-        <TabsList className="w-full">
+        <TabsList className="w-full flex-wrap h-auto">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
+          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
           <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
+          <TabsTrigger value="points" className="flex-1">النقاط</TabsTrigger>
+          {(canManageAttendance || isHalaqahTeacher) && (
+            <TabsTrigger value="attendance" className="flex-1">الحضور</TabsTrigger>
+          )}
         </TabsList>
 
         {/* ====== Recitations section ====== */}
@@ -556,7 +641,7 @@ function RecitePage() {
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
-              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
+              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithPoints(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
                 <Layers className="size-4" /> تسجيل حديث
               </Button>
             </div>
@@ -584,6 +669,132 @@ function RecitePage() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* ====== Points section ====== */}
+        <TabsContent value="points" className="space-y-4 pt-3">
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">مجموع نقاط الطالب</div>
+                <div className="text-4xl font-black text-primary">{totalPoints}</div>
+              </div>
+              <Award className="size-10 text-primary/40" />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              4 نقاط لكل صفحة قرآن جديدة • نقاط سبر الأوقاف يحددها المعلم • نقاط الأربعين النووية يحددها المعلم • 4 نقاط للحضور • 2 للحضور المتأخر
+            </p>
+          </Card>
+
+          {canAdjustPoints && (
+            <Card className="p-5 space-y-3">
+              <h3 className="font-bold">إضافة / خصم نقاط يدوياً</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <Label>عدد النقاط</Label>
+                  <Input type="number" min={1} value={manualPoints}
+                    onChange={(e) => setManualPoints(e.target.value ? Number(e.target.value) : "")} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>السبب</Label>
+                  <Input value={manualReason} onChange={(e) => setManualReason(e.target.value)} placeholder="اختياري" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" onClick={() => addManualPoints(1)}>
+                  <Plus className="size-4" /> إضافة
+                </Button>
+                <Button type="button" variant="outline" onClick={() => addManualPoints(-1)}>
+                  <Minus className="size-4" /> خصم
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          <Card className="p-5">
+            <h3 className="font-bold mb-3">سجل النقاط ({pointEvents.length})</h3>
+            {pointEvents.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">لا توجد نقاط بعد.</p>
+            ) : (
+              <ul className="divide-y">
+                {pointEvents.map((e) => (
+                  <li key={e.id} className="py-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold",
+                          e.points >= 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                        : "bg-red-500/15 text-red-700 dark:text-red-400")}>
+                          {e.points >= 0 ? `+${e.points}` : e.points}
+                        </span>
+                        <span className="text-sm">{sourceLabel(e.source)}</span>
+                        {e.archived && <span className="text-[10px] text-muted-foreground">أرشيف</span>}
+                      </div>
+                      {e.reason && <div className="text-xs text-muted-foreground mt-1">{e.reason}</div>}
+                      <div className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString("ar-EG")}</div>
+                    </div>
+                    {canEditAll && (
+                      <Button size="icon" variant="ghost" onClick={() => removePointEvent(e.id)}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </TabsContent>
+
+        {/* ====== Attendance section ====== */}
+        {(canManageAttendance || isHalaqahTeacher) && (
+          <TabsContent value="attendance" className="space-y-4 pt-3">
+            {canManageAttendance && (
+              <Card className="p-5 space-y-3">
+                <h3 className="font-bold flex items-center gap-2"><CalendarCheck className="size-4" /> تسجيل حضور</h3>
+                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                  <div>
+                    <Label>التاريخ</Label>
+                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} required />
+                  </div>
+                  <div>
+                    <Label>الحالة</Label>
+                    <Select value={attStatus} onValueChange={(v) => setAttStatus(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="present">حاضر (+4)</SelectItem>
+                        <SelectItem value="late">حضور متأخر (+2)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit">تسجيل الحضور</Button>
+                </form>
+              </Card>
+            )}
+            <Card className="p-5">
+              <h3 className="font-bold mb-3">سجل الحضور ({attendance.length})</h3>
+              {attendance.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">لا يوجد حضور مسجَّل.</p>
+              ) : (
+                <ul className="divide-y">
+                  {attendance.map((a) => (
+                    <li key={a.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold">{a.attendance_date}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.status === "present" ? "حاضر (+4)" : "حضور متأخر (+2)"}
+                          {a.archived && " • أرشيف"}
+                        </div>
+                      </div>
+                      {canManageAttendance && (
+                        <Button size="icon" variant="ghost" onClick={() => removeAttendance(a.id)}>
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Hadith dialog */}
@@ -618,6 +829,12 @@ function RecitePage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label>النقاط المستحقة</Label>
+              <Input type="number" min={0} value={hadithPoints}
+                onChange={(e) => setHadithPoints(e.target.value ? Number(e.target.value) : "")}
+                placeholder="عدد النقاط" />
             </div>
             <div>
               <Label>ملاحظات</Label>
@@ -848,6 +1065,12 @@ function RecitePage() {
               </div>
             </div>
             <div>
+              <Label>النقاط المستحقة</Label>
+              <Input type="number" min={0} value={probePoints}
+                onChange={(e) => setProbePoints(e.target.value ? Number(e.target.value) : "")}
+                placeholder="عدد النقاط" />
+            </div>
+            <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={probeNotes} onChange={(e) => setProbeNotes(e.target.value)} />
             </div>
@@ -887,6 +1110,17 @@ function RecitePage() {
       </Dialog>
     </div>
   );
+}
+
+function sourceLabel(s: string): string {
+  switch (s) {
+    case "recitation": return "تسميع قرآن";
+    case "probe": return "سبر الأوقاف";
+    case "hadith": return "الأربعين النووية";
+    case "attendance": return "حضور";
+    case "manual": return "يدوي";
+    default: return s;
+  }
 }
 
 function InfoRow({ label, value, full }: { label: string; value: string | null; full?: boolean }) {

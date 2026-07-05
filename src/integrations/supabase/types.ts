@@ -32,6 +32,47 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance: {
+        Row: {
+          academic_year: number | null
+          archived: boolean
+          attendance_date: string
+          created_at: string
+          created_by: string | null
+          id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          academic_year?: number | null
+          archived?: boolean
+          attendance_date?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status: string
+          student_id: string
+        }
+        Update: {
+          academic_year?: number | null
+          archived?: boolean
+          attendance_date?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hadith_recitations: {
         Row: {
           academic_year: number
@@ -41,6 +82,7 @@ export type Database = {
           hadith_number: number
           id: string
           notes: string | null
+          points: number
           recitation_date: string
           student_id: string
           teacher_id: string
@@ -53,6 +95,7 @@ export type Database = {
           hadith_number: number
           id?: string
           notes?: string | null
+          points?: number
           recitation_date?: string
           student_id: string
           teacher_id: string
@@ -65,6 +108,7 @@ export type Database = {
           hadith_number?: number
           id?: string
           notes?: string | null
+          points?: number
           recitation_date?: string
           student_id?: string
           teacher_id?: string
@@ -72,6 +116,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "hadith_recitations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      point_events: {
+        Row: {
+          academic_year: number | null
+          archived: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          points: number
+          reason: string | null
+          reference_id: string | null
+          source: string
+          student_id: string
+        }
+        Insert: {
+          academic_year?: number | null
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          points: number
+          reason?: string | null
+          reference_id?: string | null
+          source: string
+          student_id: string
+        }
+        Update: {
+          academic_year?: number | null
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          points?: number
+          reason?: string | null
+          reference_id?: string | null
+          source?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_events_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -88,6 +179,7 @@ export type Database = {
           id: string
           juz_number: number
           notes: string | null
+          points: number
           probe_date: string
           student_id: string
           teacher_id: string
@@ -101,6 +193,7 @@ export type Database = {
           id?: string
           juz_number: number
           notes?: string | null
+          points?: number
           probe_date?: string
           student_id: string
           teacher_id: string
@@ -114,6 +207,7 @@ export type Database = {
           id?: string
           juz_number?: number
           notes?: string | null
+          points?: number
           probe_date?: string
           student_id?: string
           teacher_id?: string
@@ -292,6 +386,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_student_attendance: {
+        Args: { _student_id: string }
+        Returns: {
+          academic_year: number
+          archived: boolean
+          attendance_date: string
+          id: string
+          status: string
+        }[]
+      }
       get_student_basic: {
         Args: { _student_id: string }
         Returns: {
@@ -310,6 +414,18 @@ export type Database = {
           notes: string
           recitation_date: string
           teacher_id: string
+        }[]
+      }
+      get_student_point_events: {
+        Args: { _student_id: string }
+        Returns: {
+          academic_year: number
+          archived: boolean
+          created_at: string
+          id: string
+          points: number
+          reason: string
+          source: string
         }[]
       }
       get_student_probes: {
@@ -340,6 +456,10 @@ export type Database = {
           surah_number: number
           to_ayah: number
         }[]
+      }
+      get_student_total_points: {
+        Args: { _student_id: string }
+        Returns: number
       }
       has_role: {
         Args: {
