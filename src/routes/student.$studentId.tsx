@@ -53,6 +53,7 @@ function StudentView() {
   const [full, setFull] = useState<any[]>([]);
   const [probes, setProbes] = useState<ProbeRow[]>([]);
   const [hadiths, setHadiths] = useState<HadithRow[]>([]);
+  const [totalPoints, setTotalPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   const [infoOpen, setInfoOpen] = useState(false);
@@ -61,17 +62,19 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
         supabase.rpc("get_student_probes", { _student_id: studentId }),
         supabase.rpc("get_student_hadiths", { _student_id: studentId }),
+        supabase.rpc("get_student_total_points", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
       setProbes((pr ?? []) as ProbeRow[]);
       setHadiths((hd ?? []) as HadithRow[]);
+      setTotalPoints(typeof pts === "number" ? pts : 0);
       setLoading(false);
     })();
   }, [studentId]);
@@ -146,7 +149,18 @@ function StudentView() {
               </Button>
             )}
           </div>
+          <div className="mt-4 rounded-lg border bg-primary/5 p-4 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-muted-foreground">مجموع النقاط</div>
+              <div className="text-3xl font-black text-primary">{totalPoints}</div>
+            </div>
+            <div className="text-xs text-muted-foreground text-left">
+              4 نقاط / صفحة جديدة<br/>
+              4 حضور • 2 حضور متأخر
+            </div>
+          </div>
         </Card>
+
 
         <Tabs defaultValue="recitations" className="mt-6">
           <TabsList className="w-full">
