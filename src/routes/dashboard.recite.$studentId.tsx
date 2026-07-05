@@ -354,6 +354,7 @@ function RecitePage() {
       student_id: studentId, teacher_id: user!.id,
       hadith_number: Number(hadithNum), grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
+      points: hadithPoints === "" ? 0 : Number(hadithPoints),
     };
     const { error } = await supabase.from("hadith_recitations").insert(payload);
     if (error) return toast.error(error.message);
@@ -376,6 +377,7 @@ function RecitePage() {
     setProbeGrade("excellent");
     setProbeNotes("");
     setProbeDate(new Date().toISOString().slice(0, 10));
+    setProbePoints("");
     setProbeOpen(true);
   }
   function openEditProbe(p: FullProbe) {
@@ -384,6 +386,7 @@ function RecitePage() {
     setProbeGrade(p.grade ?? "excellent");
     setProbeNotes(p.notes ?? "");
     setProbeDate(p.probe_date);
+    setProbePoints((p as any).points ?? "");
     setProbeOpen(true);
   }
   async function saveProbe(e: React.FormEvent) {
@@ -404,6 +407,7 @@ function RecitePage() {
       grade: probeGrade,
       notes: probeNotes || null,
       probe_date: probeDate,
+      points: probePoints === "" ? 0 : Number(probePoints),
     };
     if (editingProbe) {
       const { error } = await supabase.from("probes").update(payload).eq("id", editingProbe.id);
