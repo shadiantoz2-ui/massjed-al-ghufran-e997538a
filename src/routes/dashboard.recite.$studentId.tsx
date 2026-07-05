@@ -669,6 +669,132 @@ function RecitePage() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* ====== Points section ====== */}
+        <TabsContent value="points" className="space-y-4 pt-3">
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">مجموع نقاط الطالب</div>
+                <div className="text-4xl font-black text-primary">{totalPoints}</div>
+              </div>
+              <Award className="size-10 text-primary/40" />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              4 نقاط لكل صفحة قرآن جديدة • نقاط سبر الأوقاف يحددها المعلم • نقاط الأربعين النووية يحددها المعلم • 4 نقاط للحضور • 2 للحضور المتأخر
+            </p>
+          </Card>
+
+          {canAdjustPoints && (
+            <Card className="p-5 space-y-3">
+              <h3 className="font-bold">إضافة / خصم نقاط يدوياً</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <Label>عدد النقاط</Label>
+                  <Input type="number" min={1} value={manualPoints}
+                    onChange={(e) => setManualPoints(e.target.value ? Number(e.target.value) : "")} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>السبب</Label>
+                  <Input value={manualReason} onChange={(e) => setManualReason(e.target.value)} placeholder="اختياري" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" onClick={() => addManualPoints(1)}>
+                  <Plus className="size-4" /> إضافة
+                </Button>
+                <Button type="button" variant="outline" onClick={() => addManualPoints(-1)}>
+                  <Minus className="size-4" /> خصم
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          <Card className="p-5">
+            <h3 className="font-bold mb-3">سجل النقاط ({pointEvents.length})</h3>
+            {pointEvents.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">لا توجد نقاط بعد.</p>
+            ) : (
+              <ul className="divide-y">
+                {pointEvents.map((e) => (
+                  <li key={e.id} className="py-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold",
+                          e.points >= 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                        : "bg-red-500/15 text-red-700 dark:text-red-400")}>
+                          {e.points >= 0 ? `+${e.points}` : e.points}
+                        </span>
+                        <span className="text-sm">{sourceLabel(e.source)}</span>
+                        {e.archived && <span className="text-[10px] text-muted-foreground">أرشيف</span>}
+                      </div>
+                      {e.reason && <div className="text-xs text-muted-foreground mt-1">{e.reason}</div>}
+                      <div className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString("ar-EG")}</div>
+                    </div>
+                    {canEditAll && (
+                      <Button size="icon" variant="ghost" onClick={() => removePointEvent(e.id)}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </TabsContent>
+
+        {/* ====== Attendance section ====== */}
+        {(canManageAttendance || isHalaqahTeacher) && (
+          <TabsContent value="attendance" className="space-y-4 pt-3">
+            {canManageAttendance && (
+              <Card className="p-5 space-y-3">
+                <h3 className="font-bold flex items-center gap-2"><CalendarCheck className="size-4" /> تسجيل حضور</h3>
+                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                  <div>
+                    <Label>التاريخ</Label>
+                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} required />
+                  </div>
+                  <div>
+                    <Label>الحالة</Label>
+                    <Select value={attStatus} onValueChange={(v) => setAttStatus(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="present">حاضر (+4)</SelectItem>
+                        <SelectItem value="late">حضور متأخر (+2)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit">تسجيل الحضور</Button>
+                </form>
+              </Card>
+            )}
+            <Card className="p-5">
+              <h3 className="font-bold mb-3">سجل الحضور ({attendance.length})</h3>
+              {attendance.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">لا يوجد حضور مسجَّل.</p>
+              ) : (
+                <ul className="divide-y">
+                  {attendance.map((a) => (
+                    <li key={a.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold">{a.attendance_date}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.status === "present" ? "حاضر (+4)" : "حضور متأخر (+2)"}
+                          {a.archived && " • أرشيف"}
+                        </div>
+                      </div>
+                      {canManageAttendance && (
+                        <Button size="icon" variant="ghost" onClick={() => removeAttendance(a.id)}>
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Hadith dialog */}
