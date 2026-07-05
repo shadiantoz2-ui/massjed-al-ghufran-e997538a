@@ -831,6 +831,12 @@ function RecitePage() {
               </div>
             </div>
             <div>
+              <Label>النقاط المستحقة</Label>
+              <Input type="number" min={0} value={hadithPoints}
+                onChange={(e) => setHadithPoints(e.target.value ? Number(e.target.value) : "")}
+                placeholder="عدد النقاط" />
+            </div>
+            <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={hadithNotes} onChange={(e) => setHadithNotes(e.target.value)} />
             </div>
