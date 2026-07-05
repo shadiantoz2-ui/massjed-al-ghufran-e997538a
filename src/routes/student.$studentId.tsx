@@ -178,12 +178,17 @@ function StudentView() {
                   <p className="text-sm text-muted-foreground">لا توجد تسميعات بعد.</p>
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {full.map((r) => (
-                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : "bg-recited/10"}`}>
-                        <div className="font-semibold">
-                          {r.kind === "page"
+                    {full.map((r) => {
+                      const isOld = (r.recitation_type ?? "new") === "old";
+                      return (
+                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                        <div className="font-semibold flex items-center gap-2 flex-wrap">
+                          <span>{r.kind === "page"
                             ? `صفحة ${r.page_number}`
-                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}
+                            : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}</span>
+                          {isOld && !r.archived && (
+                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{r.recitation_date}</span>
@@ -191,7 +196,8 @@ function StudentView() {
                         </div>
                         {r.notes && <div className="mt-1 text-xs">{r.notes}</div>}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </Card>
