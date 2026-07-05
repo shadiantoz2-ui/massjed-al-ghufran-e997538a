@@ -62,7 +62,7 @@ interface TeacherOpt { user_id: string; full_name: string }
 function StudentsPage() {
   const { roles, user } = useAuth();
   const canManage = canManageStudents(roles);
-  const isHalaqahOnly = roles.includes("halaqah") && !roles.includes("admin") && !roles.includes("supervisor") && !roles.includes("reciter");
+  const isHalaqahOnly = roles.includes("halaqah") && !roles.includes("admin") && !roles.includes("supervisor");
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
   const [query, setQuery] = useState("");
