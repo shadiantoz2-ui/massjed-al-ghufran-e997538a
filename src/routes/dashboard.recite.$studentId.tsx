@@ -429,6 +429,57 @@ function RecitePage() {
     load();
   }
 
+  // ========= Points & Attendance =========
+  const canAdjustPoints = canEditAll || canHalaqahHere;
+  const canManageAttendance = canEditAll;
+  const isHalaqahTeacher = roles.includes("halaqah");
+
+  async function addManualPoints(sign: 1 | -1) {
+    if (!manualPoints || Number(manualPoints) <= 0) return toast.error("أدخل عدد النقاط");
+    const pts = sign * Number(manualPoints);
+    const { error } = await supabase.from("point_events").insert({
+      student_id: studentId,
+      points: pts,
+      source: "manual",
+      reason: manualReason || (sign > 0 ? "إضافة يدوية" : "خصم يدوي"),
+      created_by: user!.id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(sign > 0 ? "تمت الإضافة" : "تم الخصم");
+    setManualPoints("");
+    setManualReason("");
+    load();
+  }
+
+  async function removePointEvent(id: string) {
+    if (!confirm("حذف هذه الحركة؟")) return;
+    const { error } = await supabase.from("point_events").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
+  }
+
+  async function addAttendance(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from("attendance").insert({
+      student_id: studentId,
+      attendance_date: attDate,
+      status: attStatus,
+      created_by: user!.id,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم تسجيل الحضور");
+    load();
+  }
+
+  async function removeAttendance(id: string) {
+    if (!confirm("حذف هذا الحضور؟")) return;
+    const { error } = await supabase.from("attendance").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    load();
+  }
+
   if (loading) return <p className="text-center py-10">جاري التحميل...</p>;
 
   return (
@@ -438,16 +489,25 @@ function RecitePage() {
           <Button asChild variant="ghost" size="sm"><Link to="/dashboard/students"><ArrowRight className="size-4" /> الطلاب</Link></Button>
           <h1 className="text-xl font-bold">{name}</h1>
         </div>
-        <Button variant="outline" size="sm" onClick={openInfo}>
-          <Info className="size-4" /> معلومات الطالب
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-primary/10 px-3 py-1.5 text-sm font-bold text-primary flex items-center gap-1.5">
+            <Award className="size-4" /> {totalPoints} نقطة
+          </div>
+          <Button variant="outline" size="sm" onClick={openInfo}>
+            <Info className="size-4" /> معلومات الطالب
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="recitations">
-        <TabsList className="w-full">
+        <TabsList className="w-full flex-wrap h-auto">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
+          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
           <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
+          <TabsTrigger value="points" className="flex-1">النقاط</TabsTrigger>
+          {(canManageAttendance || isHalaqahTeacher) && (
+            <TabsTrigger value="attendance" className="flex-1">الحضور</TabsTrigger>
+          )}
         </TabsList>
 
         {/* ====== Recitations section ====== */}
