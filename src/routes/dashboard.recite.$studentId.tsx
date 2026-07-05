@@ -1065,6 +1065,12 @@ function RecitePage() {
               </div>
             </div>
             <div>
+              <Label>النقاط المستحقة</Label>
+              <Input type="number" min={0} value={probePoints}
+                onChange={(e) => setProbePoints(e.target.value ? Number(e.target.value) : "")}
+                placeholder="عدد النقاط" />
+            </div>
+            <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={probeNotes} onChange={(e) => setProbeNotes(e.target.value)} />
             </div>
