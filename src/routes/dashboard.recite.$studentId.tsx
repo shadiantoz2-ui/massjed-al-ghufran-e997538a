@@ -641,7 +641,7 @@ function RecitePage() {
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
-              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
+              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithPoints(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
                 <Layers className="size-4" /> تسجيل حديث
               </Button>
             </div>
