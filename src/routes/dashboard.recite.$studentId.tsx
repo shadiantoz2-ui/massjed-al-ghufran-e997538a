@@ -130,18 +130,39 @@ function RecitePage() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [info, setInfo] = useState<StudentInfo | null>(null);
 
+  // probe/hadith points input
+  const [probePoints, setProbePoints] = useState<number | "">("");
+  const [hadithPoints, setHadithPoints] = useState<number | "">("");
+
+  // points state
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [pointEvents, setPointEvents] = useState<any[]>([]);
+  const [manualPoints, setManualPoints] = useState<number | "">("");
+  const [manualReason, setManualReason] = useState("");
+
+  // attendance state
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [attDate, setAttDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [attStatus, setAttStatus] = useState<"present" | "late">("present");
+
   async function load() {
-    const [{ data: s }, { data: r }, { data: p }, { data: h }] = await Promise.all([
+    const [{ data: s }, { data: r }, { data: p }, { data: h }, { data: tp }, { data: pe }, { data: att }] = await Promise.all([
       supabase.from("students").select("full_name, nickname, father_name, teacher_id").eq("id", studentId).maybeSingle(),
       supabase.from("recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
       supabase.from("probes").select("*").eq("student_id", studentId).order("probe_date", { ascending: false }),
       supabase.from("hadith_recitations").select("*").eq("student_id", studentId).order("recitation_date", { ascending: false }),
+      supabase.rpc("get_student_total_points", { _student_id: studentId }),
+      supabase.rpc("get_student_point_events", { _student_id: studentId }),
+      supabase.rpc("get_student_attendance", { _student_id: studentId }),
     ]);
     setName(s ? `${s.full_name}${s.father_name ? ` ${s.father_name}` : ""}${s.nickname ? ` ${s.nickname}` : ""}` : "");
     setStudentTeacherId(s?.teacher_id ?? null);
     setRecs((r ?? []) as FullRecitation[]);
     setProbes((p ?? []) as FullProbe[]);
     setHadiths((h ?? []) as FullHadith[]);
+    setTotalPoints(typeof tp === "number" ? tp : 0);
+    setPointEvents((pe ?? []) as any[]);
+    setAttendance((att ?? []) as any[]);
     setLoading(false);
   }
   useEffect(() => { load(); }, [studentId]);
