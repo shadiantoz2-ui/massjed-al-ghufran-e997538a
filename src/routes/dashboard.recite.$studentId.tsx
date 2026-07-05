@@ -20,7 +20,7 @@ import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS, pageToJuz, TOTAL_PAGES } from "@/lib/quran-data";
 import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { toast } from "sonner";
-import { ArrowRight, Pencil, Trash2, Layers, Info } from "lucide-react";
+import { ArrowRight, Pencil, Trash2, Layers, Info, Award, CalendarCheck, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
