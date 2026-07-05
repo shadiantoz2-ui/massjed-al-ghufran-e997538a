@@ -1112,6 +1112,17 @@ function RecitePage() {
   );
 }
 
+function sourceLabel(s: string): string {
+  switch (s) {
+    case "recitation": return "تسميع قرآن";
+    case "probe": return "سبر الأوقاف";
+    case "hadith": return "الأربعين النووية";
+    case "attendance": return "حضور";
+    case "manual": return "يدوي";
+    default: return s;
+  }
+}
+
 function InfoRow({ label, value, full }: { label: string; value: string | null; full?: boolean }) {
   return (
     <div className={full ? "sm:col-span-2" : undefined}>
