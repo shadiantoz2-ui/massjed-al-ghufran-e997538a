@@ -128,6 +128,7 @@ function RecitePage() {
   const [probeGrade, setProbeGrade] = useState("excellent");
   const [probeNotes, setProbeNotes] = useState("");
   const [probeDate, setProbeDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [probeType, setProbeType] = useState<"new" | "old">("new");
 
   // student info dialog
   const [infoOpen, setInfoOpen] = useState(false);
