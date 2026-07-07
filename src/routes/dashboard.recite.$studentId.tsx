@@ -658,11 +658,13 @@ function RecitePage() {
                 const recs = hadiths.filter((x) => x.hadith_number === h.number);
                 const current = recs.find((x) => !x.archived);
                 const archived = !current && recs.some((x) => x.archived);
+                const isOld = current && (current.recitation_type ?? "new") === "old";
                 return (
                   <div key={h.number} className={cn(
                     "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
                     !current && !archived && "bg-card",
-                    current && "bg-recited text-recited-foreground border-recited",
+                    current && !isOld && "bg-recited text-recited-foreground border-recited",
+                    current && isOld && "bg-amber-500/80 text-white border-amber-600",
                     archived && "bg-archived text-archived-foreground border-archived/70",
                   )}>
                     <span><span className="font-bold">{h.number}.</span> {h.title}</span>
