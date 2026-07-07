@@ -359,6 +359,7 @@ function RecitePage() {
       hadith_number: Number(hadithNum), grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
       points: hadithPoints === "" ? 0 : Number(hadithPoints),
+      recitation_type: (canEditAll || canHalaqahHere) ? hadithType : "new",
     };
     const { error } = await supabase.from("hadith_recitations").insert(payload);
     if (error) return toast.error(error.message);
