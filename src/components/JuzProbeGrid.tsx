@@ -4,6 +4,7 @@ export interface ProbeLite {
   id: string;
   juz_number: number;
   archived: boolean;
+  recitation_type?: string | null;
 }
 
 interface Props {
@@ -12,12 +13,17 @@ interface Props {
 }
 
 export function JuzProbeGrid({ probes, onJuzClick }: Props) {
-  const status = new Map<number, "recited" | "archived">();
+  const status = new Map<number, "recited" | "archived" | "old">();
   for (const p of probes) {
     const cur = status.get(p.juz_number);
-    if (!cur || (cur === "archived" && !p.archived)) {
-      status.set(p.juz_number, p.archived ? "archived" : "recited");
-    }
+    const next: "recited" | "archived" | "old" = p.archived
+      ? "archived"
+      : (p.recitation_type ?? "new") === "old"
+        ? "old"
+        : "recited";
+    // priority: recited > old > archived
+    const rank = (v?: string) => (v === "recited" ? 3 : v === "old" ? 2 : v === "archived" ? 1 : 0);
+    if (rank(next) > rank(cur)) status.set(p.juz_number, next);
   }
 
   return (
