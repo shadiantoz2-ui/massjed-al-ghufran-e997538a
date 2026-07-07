@@ -34,6 +34,7 @@ interface ProbeRow extends ProbeLite {
   grade: string | null;
   notes: string | null;
   probe_date: string;
+  recitation_type?: string | null;
 }
 
 interface HadithRow {
@@ -43,6 +44,7 @@ interface HadithRow {
   notes: string | null;
   recitation_date: string;
   archived: boolean;
+  recitation_type?: string | null;
 }
 
 function StudentView() {
