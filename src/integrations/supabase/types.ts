@@ -84,6 +84,7 @@ export type Database = {
           notes: string | null
           points: number
           recitation_date: string
+          recitation_type: string
           student_id: string
           teacher_id: string
         }
@@ -97,6 +98,7 @@ export type Database = {
           notes?: string | null
           points?: number
           recitation_date?: string
+          recitation_type?: string
           student_id: string
           teacher_id: string
         }
@@ -110,6 +112,7 @@ export type Database = {
           notes?: string | null
           points?: number
           recitation_date?: string
+          recitation_type?: string
           student_id?: string
           teacher_id?: string
         }
@@ -181,6 +184,7 @@ export type Database = {
           notes: string | null
           points: number
           probe_date: string
+          recitation_type: string
           student_id: string
           teacher_id: string
           updated_at: string
@@ -195,6 +199,7 @@ export type Database = {
           notes?: string | null
           points?: number
           probe_date?: string
+          recitation_type?: string
           student_id: string
           teacher_id: string
           updated_at?: string
@@ -209,6 +214,7 @@ export type Database = {
           notes?: string | null
           points?: number
           probe_date?: string
+          recitation_type?: string
           student_id?: string
           teacher_id?: string
           updated_at?: string
@@ -413,6 +419,7 @@ export type Database = {
           id: string
           notes: string
           recitation_date: string
+          recitation_type: string
           teacher_id: string
         }[]
       }
@@ -438,6 +445,7 @@ export type Database = {
           juz_number: number
           notes: string
           probe_date: string
+          recitation_type: string
         }[]
       }
       get_student_recitations: {
