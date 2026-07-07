@@ -222,16 +222,24 @@ function StudentView() {
                   <p className="text-sm text-muted-foreground">لا يوجد سبر مسجَّل بعد.</p>
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {probes.map((p) => (
-                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : "bg-recited/10"}`}>
-                        <div className="font-semibold">سبر الجزء {p.juz_number}</div>
+                    {probes.map((p) => {
+                      const isOld = (p.recitation_type ?? "new") === "old";
+                      return (
+                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                        <div className="font-semibold flex items-center gap-2 flex-wrap">
+                          <span>سبر الجزء {p.juz_number}</span>
+                          {isOld && !p.archived && (
+                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                          )}
+                        </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{p.probe_date}</span>
                           {p.grade && <span>{GRADE_LABELS[p.grade]}</span>}
                         </div>
                         {p.notes && <div className="mt-1 text-xs">{p.notes}</div>}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </Card>
