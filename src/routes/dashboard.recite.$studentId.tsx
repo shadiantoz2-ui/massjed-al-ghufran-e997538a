@@ -48,6 +48,7 @@ interface FullProbe extends ProbeLite {
   notes: string | null;
   probe_date: string;
   academic_year: number;
+  recitation_type?: string | null;
 }
 
 interface StudentInfo {
