@@ -287,7 +287,7 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "page",
           page_number: p, surah_number: null, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
-          recitation_type: canEditAll ? bulkType : "new",
+          recitation_type: (canEditAll || canHalaqahHere) ? bulkType : "new",
         });
       }
     } else {
@@ -302,7 +302,7 @@ function RecitePage() {
           student_id: studentId, teacher_id: user!.id, kind: "surah",
           page_number: null, surah_number: n, from_ayah: null, to_ayah: null,
           grade: bulkGrade, notes: bulkNotes || null, recitation_date: bulkDate,
-          recitation_type: canEditAll ? bulkType : "new",
+          recitation_type: (canEditAll || canHalaqahHere) ? bulkType : "new",
         });
 
       }
@@ -900,7 +900,7 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
-            {canEditAll && (
+            {(canEditAll || canHalaqahHere) && (
               <div>
                 <Label>نوع التسميع</Label>
                 <Select value={recType} onValueChange={(v) => setRecType(v as any)}>
@@ -1005,7 +1005,7 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
-            {canEditAll && (
+            {(canEditAll || canHalaqahHere) && (
               <div>
                 <Label>نوع التسميعات</Label>
                 <Select value={bulkType} onValueChange={(v) => setBulkType(v as any)}>
