@@ -34,6 +34,7 @@ interface ProbeRow extends ProbeLite {
   grade: string | null;
   notes: string | null;
   probe_date: string;
+  recitation_type?: string | null;
 }
 
 interface HadithRow {
@@ -43,6 +44,7 @@ interface HadithRow {
   notes: string | null;
   recitation_date: string;
   archived: boolean;
+  recitation_type?: string | null;
 }
 
 function StudentView() {
@@ -105,12 +107,16 @@ function StudentView() {
   const probedCount = probes.filter((p) => !p.archived).length;
   const hadithCount = hadiths.filter((h) => !h.archived).length;
 
-  const hadithStatus = new Map<number, "recited" | "archived">();
+  const hadithStatus = new Map<number, "recited" | "archived" | "old">();
+  const rank = (v?: string) => (v === "recited" ? 3 : v === "old" ? 2 : v === "archived" ? 1 : 0);
   for (const h of hadiths) {
     const cur = hadithStatus.get(h.hadith_number);
-    if (!cur || (cur === "archived" && !h.archived)) {
-      hadithStatus.set(h.hadith_number, h.archived ? "archived" : "recited");
-    }
+    const next: "recited" | "archived" | "old" = h.archived
+      ? "archived"
+      : (h.recitation_type ?? "new") === "old"
+        ? "old"
+        : "recited";
+    if (rank(next) > rank(cur)) hadithStatus.set(h.hadith_number, next);
   }
 
   return (
@@ -216,16 +222,24 @@ function StudentView() {
                   <p className="text-sm text-muted-foreground">لا يوجد سبر مسجَّل بعد.</p>
                 ) : (
                   <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {probes.map((p) => (
-                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : "bg-recited/10"}`}>
-                        <div className="font-semibold">سبر الجزء {p.juz_number}</div>
+                    {probes.map((p) => {
+                      const isOld = (p.recitation_type ?? "new") === "old";
+                      return (
+                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                        <div className="font-semibold flex items-center gap-2 flex-wrap">
+                          <span>سبر الجزء {p.juz_number}</span>
+                          {isOld && !p.archived && (
+                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                          )}
+                        </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                           <span>{p.probe_date}</span>
                           {p.grade && <span>{GRADE_LABELS[p.grade]}</span>}
                         </div>
                         {p.notes && <div className="mt-1 text-xs">{p.notes}</div>}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </Card>
@@ -237,7 +251,8 @@ function StudentView() {
               <h2 className="mb-3 font-bold">الأربعين النووية (42 حديث)</h2>
               <div className="flex flex-wrap items-center gap-3 text-xs mb-3">
                 <Legend className="bg-card border" label="لم يُسمَّع" />
-                <Legend className="bg-recited text-recited-foreground" label="مُسمَّع (السنة الحالية)" />
+                <Legend className="bg-recited text-recited-foreground" label="مُسمَّع (حديث)" />
+                <Legend className="bg-amber-500/80 text-white" label="قديم" />
                 <Legend className="bg-archived text-archived-foreground" label="سنة سابقة" />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -248,6 +263,7 @@ function StudentView() {
                       "rounded-md border px-3 py-2 text-sm",
                       !s && "bg-card",
                       s === "recited" && "bg-recited text-recited-foreground border-recited",
+                      s === "old" && "bg-amber-500/80 text-white border-amber-600",
                       s === "archived" && "bg-archived text-archived-foreground border-archived/70",
                     )}>
                       <span className="font-bold">{h.number}.</span> {h.title}

@@ -48,6 +48,7 @@ interface FullProbe extends ProbeLite {
   notes: string | null;
   probe_date: string;
   academic_year: number;
+  recitation_type?: string | null;
 }
 
 interface StudentInfo {
@@ -73,6 +74,7 @@ interface FullHadith {
   notes: string | null;
   recitation_date: string;
   archived: boolean;
+  recitation_type?: string | null;
 }
 
 function RecitePage() {
@@ -92,6 +94,7 @@ function RecitePage() {
   const [hadithGrade, setHadithGrade] = useState("excellent");
   const [hadithNotes, setHadithNotes] = useState("");
   const [hadithDate, setHadithDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [hadithType, setHadithType] = useState<"new" | "old">("new");
 
   // single recitation dialog
   const [open, setOpen] = useState(false);
@@ -125,6 +128,7 @@ function RecitePage() {
   const [probeGrade, setProbeGrade] = useState("excellent");
   const [probeNotes, setProbeNotes] = useState("");
   const [probeDate, setProbeDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [probeType, setProbeType] = useState<"new" | "old">("new");
 
   // student info dialog
   const [infoOpen, setInfoOpen] = useState(false);
@@ -355,6 +359,7 @@ function RecitePage() {
       hadith_number: Number(hadithNum), grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
       points: hadithPoints === "" ? 0 : Number(hadithPoints),
+      recitation_type: (canEditAll || canHalaqahHere) ? hadithType : "new",
     };
     const { error } = await supabase.from("hadith_recitations").insert(payload);
     if (error) return toast.error(error.message);
@@ -378,6 +383,7 @@ function RecitePage() {
     setProbeNotes("");
     setProbeDate(new Date().toISOString().slice(0, 10));
     setProbePoints("");
+    setProbeType("new");
     setProbeOpen(true);
   }
   function openEditProbe(p: FullProbe) {
@@ -387,6 +393,7 @@ function RecitePage() {
     setProbeNotes(p.notes ?? "");
     setProbeDate(p.probe_date);
     setProbePoints((p as any).points ?? "");
+    setProbeType(((p.recitation_type as "new" | "old") ?? "new"));
     setProbeOpen(true);
   }
   async function saveProbe(e: React.FormEvent) {
@@ -408,6 +415,7 @@ function RecitePage() {
       notes: probeNotes || null,
       probe_date: probeDate,
       points: probePoints === "" ? 0 : Number(probePoints),
+      recitation_type: (canEditAll || canHalaqahHere) ? probeType : "new",
     };
     if (editingProbe) {
       const { error } = await supabase.from("probes").update(payload).eq("id", editingProbe.id);
@@ -612,7 +620,17 @@ function RecitePage() {
                 {probes.map((p) => (
                   <li key={p.id} className="py-3 flex items-center justify-between gap-3">
                     <div>
-                      <div className="font-semibold">سبر الجزء {p.juz_number}</div>
+                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                        <span>سبر الجزء {p.juz_number}</span>
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                          (p.recitation_type ?? "new") === "old"
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                            : "bg-primary/15 text-primary",
+                        )}>
+                          {(p.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
+                        </span>
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {p.probe_date} • {p.grade ? GRADE_LABELS[p.grade] : ""}
                         {p.archived && " • أرشيف"}
@@ -641,7 +659,7 @@ function RecitePage() {
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
-              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithPoints(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithOpen(true); }}>
+              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithPoints(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithType("new"); setHadithOpen(true); }}>
                 <Layers className="size-4" /> تسجيل حديث
               </Button>
             </div>
@@ -650,11 +668,13 @@ function RecitePage() {
                 const recs = hadiths.filter((x) => x.hadith_number === h.number);
                 const current = recs.find((x) => !x.archived);
                 const archived = !current && recs.some((x) => x.archived);
+                const isOld = current && (current.recitation_type ?? "new") === "old";
                 return (
                   <div key={h.number} className={cn(
                     "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
                     !current && !archived && "bg-card",
-                    current && "bg-recited text-recited-foreground border-recited",
+                    current && !isOld && "bg-recited text-recited-foreground border-recited",
+                    current && isOld && "bg-amber-500/80 text-white border-amber-600",
                     archived && "bg-archived text-archived-foreground border-archived/70",
                   )}>
                     <span><span className="font-bold">{h.number}.</span> {h.title}</span>
@@ -830,6 +850,18 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {(canEditAll || canHalaqahHere) && (
+              <div>
+                <Label>نوع التسميع</Label>
+                <Select value={hadithType} onValueChange={(v) => setHadithType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>النقاط المستحقة</Label>
               <Input type="number" min={0} value={hadithPoints}
@@ -1064,6 +1096,18 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {(canEditAll || canHalaqahHere) && (
+              <div>
+                <Label>نوع التسميع</Label>
+                <Select value={probeType} onValueChange={(v) => setProbeType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>النقاط المستحقة</Label>
               <Input type="number" min={0} value={probePoints}
