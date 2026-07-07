@@ -94,6 +94,7 @@ function RecitePage() {
   const [hadithGrade, setHadithGrade] = useState("excellent");
   const [hadithNotes, setHadithNotes] = useState("");
   const [hadithDate, setHadithDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [hadithType, setHadithType] = useState<"new" | "old">("new");
 
   // single recitation dialog
   const [open, setOpen] = useState(false);
