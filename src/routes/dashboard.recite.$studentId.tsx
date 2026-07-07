@@ -850,6 +850,18 @@ function RecitePage() {
                 </Select>
               </div>
             </div>
+            {(canEditAll || canHalaqahHere) && (
+              <div>
+                <Label>نوع التسميع</Label>
+                <Select value={hadithType} onValueChange={(v) => setHadithType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">حديث</SelectItem>
+                    <SelectItem value="old">قديم</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>النقاط المستحقة</Label>
               <Input type="number" min={0} value={hadithPoints}
