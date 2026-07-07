@@ -74,6 +74,7 @@ interface FullHadith {
   notes: string | null;
   recitation_date: string;
   archived: boolean;
+  recitation_type?: string | null;
 }
 
 function RecitePage() {
