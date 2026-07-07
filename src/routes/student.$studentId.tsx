@@ -107,12 +107,16 @@ function StudentView() {
   const probedCount = probes.filter((p) => !p.archived).length;
   const hadithCount = hadiths.filter((h) => !h.archived).length;
 
-  const hadithStatus = new Map<number, "recited" | "archived">();
+  const hadithStatus = new Map<number, "recited" | "archived" | "old">();
+  const rank = (v?: string) => (v === "recited" ? 3 : v === "old" ? 2 : v === "archived" ? 1 : 0);
   for (const h of hadiths) {
     const cur = hadithStatus.get(h.hadith_number);
-    if (!cur || (cur === "archived" && !h.archived)) {
-      hadithStatus.set(h.hadith_number, h.archived ? "archived" : "recited");
-    }
+    const next: "recited" | "archived" | "old" = h.archived
+      ? "archived"
+      : (h.recitation_type ?? "new") === "old"
+        ? "old"
+        : "recited";
+    if (rank(next) > rank(cur)) hadithStatus.set(h.hadith_number, next);
   }
 
   return (
