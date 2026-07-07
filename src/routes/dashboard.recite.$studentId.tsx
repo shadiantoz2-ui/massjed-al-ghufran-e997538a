@@ -620,7 +620,17 @@ function RecitePage() {
                 {probes.map((p) => (
                   <li key={p.id} className="py-3 flex items-center justify-between gap-3">
                     <div>
-                      <div className="font-semibold">سبر الجزء {p.juz_number}</div>
+                      <div className="font-semibold flex items-center gap-2 flex-wrap">
+                        <span>سبر الجزء {p.juz_number}</span>
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                          (p.recitation_type ?? "new") === "old"
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                            : "bg-primary/15 text-primary",
+                        )}>
+                          {(p.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
+                        </span>
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {p.probe_date} • {p.grade ? GRADE_LABELS[p.grade] : ""}
                         {p.archived && " • أرشيف"}
