@@ -383,6 +383,7 @@ function RecitePage() {
     setProbeNotes("");
     setProbeDate(new Date().toISOString().slice(0, 10));
     setProbePoints("");
+    setProbeType("new");
     setProbeOpen(true);
   }
   function openEditProbe(p: FullProbe) {
@@ -392,6 +393,7 @@ function RecitePage() {
     setProbeNotes(p.notes ?? "");
     setProbeDate(p.probe_date);
     setProbePoints((p as any).points ?? "");
+    setProbeType(((p.recitation_type as "new" | "old") ?? "new"));
     setProbeOpen(true);
   }
   async function saveProbe(e: React.FormEvent) {
@@ -413,6 +415,7 @@ function RecitePage() {
       notes: probeNotes || null,
       probe_date: probeDate,
       points: probePoints === "" ? 0 : Number(probePoints),
+      recitation_type: (canEditAll || canHalaqahHere) ? probeType : "new",
     };
     if (editingProbe) {
       const { error } = await supabase.from("probes").update(payload).eq("id", editingProbe.id);
