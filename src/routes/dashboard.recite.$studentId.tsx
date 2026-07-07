@@ -230,7 +230,7 @@ function RecitePage() {
       grade,
       notes: notes || null,
       recitation_date: date,
-      recitation_type: canEditAll ? recType : "new",
+      recitation_type: (canEditAll || canHalaqahHere) ? recType : "new",
     };
 
     if (editing) {
