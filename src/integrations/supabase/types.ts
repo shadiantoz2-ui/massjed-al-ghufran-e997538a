@@ -37,6 +37,7 @@ export type Database = {
           academic_year: number | null
           archived: boolean
           attendance_date: string
+          course_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -47,6 +48,7 @@ export type Database = {
           academic_year?: number | null
           archived?: boolean
           attendance_date?: string
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -57,6 +59,7 @@ export type Database = {
           academic_year?: number | null
           archived?: boolean
           attendance_date?: string
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -64,6 +67,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_student_id_fkey"
             columns: ["student_id"]
@@ -73,10 +83,41 @@ export type Database = {
           },
         ]
       }
+      courses: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          is_current: boolean
+          name: string
+          started_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          is_current?: boolean
+          name: string
+          started_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          is_current?: boolean
+          name?: string
+          started_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       hadith_recitations: {
         Row: {
           academic_year: number
           archived: boolean
+          course_id: string | null
           created_at: string
           grade: string | null
           hadith_number: number
@@ -91,6 +132,7 @@ export type Database = {
         Insert: {
           academic_year: number
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           grade?: string | null
           hadith_number: number
@@ -105,6 +147,7 @@ export type Database = {
         Update: {
           academic_year?: number
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           grade?: string | null
           hadith_number?: number
@@ -118,6 +161,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "hadith_recitations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hadith_recitations_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -130,6 +180,7 @@ export type Database = {
         Row: {
           academic_year: number | null
           archived: boolean
+          course_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -142,6 +193,7 @@ export type Database = {
         Insert: {
           academic_year?: number | null
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -154,6 +206,7 @@ export type Database = {
         Update: {
           academic_year?: number | null
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -164,6 +217,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "point_events_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "point_events_student_id_fkey"
             columns: ["student_id"]
@@ -177,6 +237,7 @@ export type Database = {
         Row: {
           academic_year: number | null
           archived: boolean
+          course_id: string | null
           created_at: string
           grade: string | null
           id: string
@@ -192,6 +253,7 @@ export type Database = {
         Insert: {
           academic_year?: number | null
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           grade?: string | null
           id?: string
@@ -207,6 +269,7 @@ export type Database = {
         Update: {
           academic_year?: number | null
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           grade?: string | null
           id?: string
@@ -220,6 +283,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "probes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "probes_student_id_fkey"
             columns: ["student_id"]
@@ -254,6 +324,7 @@ export type Database = {
         Row: {
           academic_year: number
           archived: boolean
+          course_id: string | null
           created_at: string
           from_ayah: number | null
           grade: string | null
@@ -271,6 +342,7 @@ export type Database = {
         Insert: {
           academic_year: number
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           from_ayah?: number | null
           grade?: string | null
@@ -288,6 +360,7 @@ export type Database = {
         Update: {
           academic_year?: number
           archived?: boolean
+          course_id?: string | null
           created_at?: string
           from_ayah?: number | null
           grade?: string | null
@@ -303,6 +376,13 @@ export type Database = {
           to_ayah?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "recitations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recitations_student_id_fkey"
             columns: ["student_id"]
@@ -392,6 +472,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_course: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          year: number
+        }[]
+      }
+      get_student_achievements: {
+        Args: { _student_id: string }
+        Returns: {
+          course_id: string
+          course_name: string
+          course_year: number
+          ended_at: string
+          hadiths_count: number
+          is_current: boolean
+          pages_count: number
+          probes_count: number
+          surahs_count: number
+          total_points: number
+        }[]
+      }
       get_student_attendance: {
         Args: { _student_id: string }
         Returns: {
@@ -496,7 +599,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      start_new_academic_year: { Args: never; Returns: undefined }
+      start_new_course: {
+        Args: { _name: string; _year: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "supervisor" | "reciter" | "halaqah"
