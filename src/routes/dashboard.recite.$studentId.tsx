@@ -516,7 +516,11 @@ function RecitePage() {
           {(canManageAttendance || isHalaqahTeacher) && (
             <TabsTrigger value="attendance" className="flex-1">الحضور</TabsTrigger>
           )}
+          {canEditAll && (
+            <TabsTrigger value="achievements" className="flex-1">الإنجازات</TabsTrigger>
+          )}
         </TabsList>
+        {canEditAll && <AchievementsPanel studentId={studentId} />}
 
         {/* ====== Recitations section ====== */}
         <TabsContent value="recitations" className="space-y-4 pt-3">
