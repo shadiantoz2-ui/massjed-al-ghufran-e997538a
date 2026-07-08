@@ -27,7 +27,16 @@ function Index() {
   const [results, setResults] = useState<StudentResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [course, setCourse] = useState<{ name: string; year: number } | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.rpc("get_current_course");
+      const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
+      if (row) setCourse({ name: row.name, year: row.year });
+    })();
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
