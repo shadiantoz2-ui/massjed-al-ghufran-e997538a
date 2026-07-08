@@ -78,10 +78,16 @@ function Index() {
       <main className="mx-auto max-w-2xl px-4 py-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold sm:text-3xl">السلام عليكم ورحمة الله</h1>
-          <p className="mt-2 text-muted-foreground">
+          {course && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
+              {course.name} — {course.year}
+            </div>
+          )}
+          <p className="mt-3 text-muted-foreground">
             اكتب اسمك للاطلاع على تسميعاتك من القرآن الكريم.
           </p>
         </div>
+
 
         <Card className="mt-8 p-5">
           <form onSubmit={handleSearch} className="flex gap-2">
