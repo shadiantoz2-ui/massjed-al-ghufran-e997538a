@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { GraduationCap, CalendarClock, Search } from "lucide-react";
@@ -23,21 +25,28 @@ function DashboardHome() {
 }
 
 function Home() {
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const [studentsCount, setStudentsCount] = useState<number | null>(null);
-  const [year, setYear] = useState<number | null>(null);
+  const [course, setCourse] = useState<{ id: string; name: string; year: number } | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; full_name: string }[]>([]);
-  const [confirming, setConfirming] = useState(false);
+
+  const [newOpen, setNewOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newYear, setNewYear] = useState<number>(new Date().getFullYear());
+  const [saving, setSaving] = useState(false);
+
+  async function loadCourse() {
+    const { data } = await supabase.rpc("get_current_course");
+    const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
+    setCourse(row);
+  }
 
   useEffect(() => {
     (async () => {
-      const [{ count: sc }, { data: settings }] = await Promise.all([
-        supabase.from("students").select("id", { count: "exact", head: true }),
-        supabase.from("app_settings").select("current_academic_year").eq("id", 1).maybeSingle(),
-      ]);
+      const { count: sc } = await supabase.from("students").select("id", { count: "exact", head: true });
       setStudentsCount(sc ?? 0);
-      setYear(settings?.current_academic_year ?? null);
+      await loadCourse();
     })();
   }, []);
 
@@ -48,27 +57,34 @@ function Home() {
     setResults((data ?? []) as any);
   }
 
-  async function startNewYear() {
-    if (!confirming) {
-      setConfirming(true);
-      setTimeout(() => setConfirming(false), 4000);
-      return;
-    }
-    const { error } = await supabase.rpc("start_new_academic_year");
+  async function startNewCourse(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newName.trim()) return toast.error("أدخل اسم الدورة");
+    setSaving(true);
+    const { error } = await supabase.rpc("start_new_course", { _name: newName.trim(), _year: Number(newYear) });
+    setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("تم بدء السنة الدراسية الجديدة");
-    setConfirming(false);
-    const { data: settings } = await supabase
-      .from("app_settings").select("current_academic_year").eq("id", 1).maybeSingle();
-    setYear(settings?.current_academic_year ?? null);
-    
+    toast.success("تم بدء الدورة الجديدة");
+    setNewOpen(false);
+    setNewName("");
+    await loadCourse();
   }
 
   return (
     <div className="space-y-6">
+      {user && (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <p className="text-sm">مرحباً بك 👋 <strong>{user.email}</strong></p>
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
-        <StatCard icon={GraduationCap} label="عدد الطلاب" value={studentsCount} />
-        <StatCard icon={CalendarClock} label="السنة الدراسية" value={year} />
+        <StatCard icon={GraduationCap} label="عدد الطلاب" value={studentsCount != null ? String(studentsCount) : "—"} />
+        <StatCard
+          icon={CalendarClock}
+          label="الدورة الحالية"
+          value={course ? `${course.name} — ${course.year}` : "—"}
+        />
       </div>
 
       <Card className="p-5">
@@ -95,32 +111,52 @@ function Home() {
 
       {roles.includes("admin") && (
         <Card className="p-5 border-amber-400/40 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/30">
-          <h2 className="font-bold">إنهاء السنة الدراسية</h2>
+          <h2 className="font-bold">بدء دورة جديدة</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            عند البدء بسنة جديدة سيتم تحويل جميع التسميعات الحالية إلى أرشيف (اللون الأصفر) والبدء من جديد باللون الأخضر.
+            عند بدء دورة جديدة سيتم تحويل جميع التسميعات الحالية إلى الأرشيف (اللون الأصفر) وإعادة حساب النقاط من جديد.
+            ستقوم باختيار اسم الدورة وعامها (مثال: دورة صيف 2026).
           </p>
-          <Button
-            variant={confirming ? "destructive" : "outline"}
-            className="mt-3"
-            onClick={startNewYear}
-          >
-            {confirming ? "اضغط مرة أخرى للتأكيد" : "بدء سنة دراسية جديدة"}
+          <Button className="mt-3" onClick={() => { setNewName(""); setNewYear(new Date().getFullYear()); setNewOpen(true); }}>
+            بدء دورة جديدة
           </Button>
         </Card>
       )}
+
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>بدء دورة جديدة</DialogTitle></DialogHeader>
+          <form onSubmit={startNewCourse} className="space-y-3">
+            <div>
+              <Label>اسم الدورة</Label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="مثال: دورة الصيف" required />
+            </div>
+            <div>
+              <Label>العام</Label>
+              <Input type="number" min={2000} max={2100} value={newYear}
+                onChange={(e) => setNewYear(Number(e.target.value))} required />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              سيتم أرشفة كل تسميعات الدورة الحالية وتحويلها للون الأصفر، وستبدأ حساب النقاط من الصفر.
+            </p>
+            <DialogFooter>
+              <Button type="submit" disabled={saving}>{saving ? "جاري..." : "تأكيد وبدء الدورة"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number | null }) {
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <Card className="p-4 flex items-center gap-3">
       <div className="rounded-lg bg-primary/10 p-3 text-primary">
         <Icon className="size-6" />
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-xs text-muted-foreground">{label}</div>
-        <div className="text-xl font-bold">{value ?? "—"}</div>
+        <div className="text-lg font-bold truncate">{value}</div>
       </div>
     </Card>
   );

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,16 @@ function Index() {
   const [results, setResults] = useState<StudentResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [course, setCourse] = useState<{ name: string; year: number } | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.rpc("get_current_course");
+      const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
+      if (row) setCourse({ name: row.name, year: row.year });
+    })();
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -69,10 +78,16 @@ function Index() {
       <main className="mx-auto max-w-2xl px-4 py-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold sm:text-3xl">السلام عليكم ورحمة الله</h1>
-          <p className="mt-2 text-muted-foreground">
+          {course && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
+              {course.name} — {course.year}
+            </div>
+          )}
+          <p className="mt-3 text-muted-foreground">
             اكتب اسمك للاطلاع على تسميعاتك من القرآن الكريم.
           </p>
         </div>
+
 
         <Card className="mt-8 p-5">
           <form onSubmit={handleSearch} className="flex gap-2">
