@@ -187,13 +187,13 @@ function StudentView() {
                     {full.map((r) => {
                       const isOld = (r.recitation_type ?? "new") === "old";
                       return (
-                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived || isOld ? "bg-archived/20 border-archived/40" : "bg-recited/10"}`}>
                         <div className="font-semibold flex items-center gap-2 flex-wrap">
                           <span>{r.kind === "page"
                             ? `صفحة ${r.page_number}`
                             : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}</span>
                           {isOld && !r.archived && (
-                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                            <span className="rounded-full bg-archived/40 text-archived-foreground px-2 py-0.5 text-[10px] font-bold">قديم</span>
                           )}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
