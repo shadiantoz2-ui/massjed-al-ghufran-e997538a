@@ -560,7 +560,7 @@ function RecitePage() {
                             <span className={cn(
                               "rounded-full px-2 py-0.5 text-[10px] font-bold",
                               (r.recitation_type ?? "new") === "old"
-                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                ? "bg-archived/40 text-archived-foreground"
                                 : "bg-primary/15 text-primary",
                             )}>
                               {(r.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
@@ -625,7 +625,7 @@ function RecitePage() {
                         <span className={cn(
                           "rounded-full px-2 py-0.5 text-[10px] font-bold",
                           (p.recitation_type ?? "new") === "old"
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                            ? "bg-archived/40 text-archived-foreground"
                             : "bg-primary/15 text-primary",
                         )}>
                           {(p.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
@@ -674,7 +674,7 @@ function RecitePage() {
                     "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
                     !current && !archived && "bg-card",
                     current && !isOld && "bg-recited text-recited-foreground border-recited",
-                    current && isOld && "bg-amber-500/80 text-white border-amber-600",
+                    current && isOld && "bg-archived text-archived-foreground border-archived/70",
                     archived && "bg-archived text-archived-foreground border-archived/70",
                   )}>
                     <span><span className="font-bold">{h.number}.</span> {h.title}</span>

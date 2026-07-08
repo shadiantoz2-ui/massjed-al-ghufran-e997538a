@@ -187,13 +187,13 @@ function StudentView() {
                     {full.map((r) => {
                       const isOld = (r.recitation_type ?? "new") === "old";
                       return (
-                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                      <li key={r.id} className={`rounded-md border p-3 text-sm ${r.archived || isOld ? "bg-archived/20 border-archived/40" : "bg-recited/10"}`}>
                         <div className="font-semibold flex items-center gap-2 flex-wrap">
                           <span>{r.kind === "page"
                             ? `صفحة ${r.page_number}`
                             : `سورة ${JUZ_30_SURAHS.find((s) => s.number === r.surah_number)?.name ?? r.surah_number}`}</span>
                           {isOld && !r.archived && (
-                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                            <span className="rounded-full bg-archived/40 text-archived-foreground px-2 py-0.5 text-[10px] font-bold">قديم</span>
                           )}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -225,11 +225,11 @@ function StudentView() {
                     {probes.map((p) => {
                       const isOld = (p.recitation_type ?? "new") === "old";
                       return (
-                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived ? "bg-archived/20" : isOld ? "bg-amber-500/15 border-amber-500/40" : "bg-recited/10"}`}>
+                      <li key={p.id} className={`rounded-md border p-3 text-sm ${p.archived || isOld ? "bg-archived/20 border-archived/40" : "bg-recited/10"}`}>
                         <div className="font-semibold flex items-center gap-2 flex-wrap">
                           <span>سبر الجزء {p.juz_number}</span>
                           {isOld && !p.archived && (
-                            <span className="rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">قديم</span>
+                            <span className="rounded-full bg-archived/40 text-archived-foreground px-2 py-0.5 text-[10px] font-bold">قديم</span>
                           )}
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -252,8 +252,7 @@ function StudentView() {
               <div className="flex flex-wrap items-center gap-3 text-xs mb-3">
                 <Legend className="bg-card border" label="لم يُسمَّع" />
                 <Legend className="bg-recited text-recited-foreground" label="مُسمَّع (حديث)" />
-                <Legend className="bg-amber-500/80 text-white" label="قديم" />
-                <Legend className="bg-archived text-archived-foreground" label="سنة سابقة" />
+                <Legend className="bg-archived text-archived-foreground" label="قديم / سنة سابقة" />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {NAWAWI_HADITHS.map((h) => {
@@ -263,7 +262,7 @@ function StudentView() {
                       "rounded-md border px-3 py-2 text-sm",
                       !s && "bg-card",
                       s === "recited" && "bg-recited text-recited-foreground border-recited",
-                      s === "old" && "bg-amber-500/80 text-white border-amber-600",
+                      s === "old" && "bg-archived text-archived-foreground border-archived/70",
                       s === "archived" && "bg-archived text-archived-foreground border-archived/70",
                     )}>
                       <span className="font-bold">{h.number}.</span> {h.title}
