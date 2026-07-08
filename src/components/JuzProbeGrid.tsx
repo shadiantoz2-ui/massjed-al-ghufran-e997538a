@@ -46,7 +46,7 @@ export function JuzProbeGrid({ probes, onJuzClick }: Props) {
                 "rounded-md border px-3 py-3 text-sm font-bold transition",
                 !s && "bg-card hover:bg-accent",
                 s === "recited" && "bg-recited text-recited-foreground border-recited",
-                s === "old" && "bg-amber-500/80 text-white border-amber-600",
+                s === "old" && "bg-archived text-archived-foreground border-archived/70",
                 s === "archived" && "bg-archived text-archived-foreground border-archived/70",
                 onJuzClick && "cursor-pointer",
               )}
