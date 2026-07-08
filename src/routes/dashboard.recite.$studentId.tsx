@@ -625,7 +625,7 @@ function RecitePage() {
                         <span className={cn(
                           "rounded-full px-2 py-0.5 text-[10px] font-bold",
                           (p.recitation_type ?? "new") === "old"
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                            ? "bg-archived/40 text-archived-foreground"
                             : "bg-primary/15 text-primary",
                         )}>
                           {(p.recitation_type ?? "new") === "old" ? "قديم" : "حديث"}
