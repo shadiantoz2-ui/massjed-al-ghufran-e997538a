@@ -669,17 +669,30 @@ function RecitePage() {
                 const current = recs.find((x) => !x.archived);
                 const archived = !current && recs.some((x) => x.archived);
                 const isOld = current && (current.recitation_type ?? "new") === "old";
+                const canRecord = !current;
                 return (
                   <div key={h.number} className={cn(
-                    "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2",
-                    !current && !archived && "bg-card",
+                    "rounded-md border px-3 py-2 text-sm flex items-center justify-between gap-2 transition",
+                    !current && !archived && "bg-card hover:bg-accent cursor-pointer",
                     current && !isOld && "bg-recited text-recited-foreground border-recited",
                     current && isOld && "bg-archived text-archived-foreground border-archived/70",
-                    archived && "bg-archived text-archived-foreground border-archived/70",
-                  )}>
+                    archived && "bg-archived text-archived-foreground border-archived/70 hover:bg-archived/80 cursor-pointer",
+                  )}
+                    onClick={() => {
+                      if (!canRecord) return;
+                      setHadithNum(h.number);
+                      setHadithGrade("excellent");
+                      setHadithNotes("");
+                      setHadithPoints("");
+                      setHadithDate(new Date().toISOString().slice(0,10));
+                      setHadithType("new");
+                      setHadithOpen(true);
+                    }}
+                    role={canRecord ? "button" : undefined}
+                  >
                     <span><span className="font-bold">{h.number}.</span> {h.title}</span>
                     {current && (canEditAll || current.teacher_id === user?.id || canHalaqahHere) && (
-                      <button onClick={() => removeHadith(current.id)} className="opacity-70 hover:opacity-100">
+                      <button onClick={(e) => { e.stopPropagation(); removeHadith(current.id); }} className="opacity-70 hover:opacity-100">
                         <Trash2 className="size-4" />
                       </button>
                     )}
