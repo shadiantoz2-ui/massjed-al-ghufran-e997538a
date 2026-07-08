@@ -1192,3 +1192,60 @@ function InfoRow({ label, value, full }: { label: string; value: string | null; 
     </div>
   );
 }
+
+function AchievementsPanel({ studentId }: { studentId: string }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.rpc("get_student_achievements", { _student_id: studentId });
+      setRows((data ?? []) as any[]);
+      setLoaded(true);
+    })();
+  }, [studentId]);
+  return (
+    <TabsContent value="achievements" className="space-y-3 pt-3">
+      <Card className="p-5">
+        <h2 className="mb-3 font-bold">إنجازات الطالب (الأرشيف)</h2>
+        {!loaded ? (
+          <p className="text-sm text-muted-foreground">جاري التحميل...</p>
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">لا توجد دورات بعد.</p>
+        ) : (
+          <ul className="space-y-2">
+            {rows.map((c) => (
+              <li key={c.course_id} className={cn(
+                "rounded-lg border p-4",
+                c.is_current ? "bg-primary/5 border-primary/30" : "bg-card"
+              )}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="font-bold">
+                    {c.course_name} — {c.course_year}
+                    {c.is_current && <span className="mr-2 text-xs rounded-full bg-primary text-primary-foreground px-2 py-0.5">الحالية</span>}
+                  </div>
+                  <div className="text-2xl font-black text-primary">{c.total_points} <span className="text-xs font-normal text-muted-foreground">نقطة</span></div>
+                </div>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <Stat label="صفحات" value={c.pages_count} />
+                  <Stat label="سور" value={c.surahs_count} />
+                  <Stat label="سبر أجزاء" value={c.probes_count} />
+                  <Stat label="أحاديث" value={c.hadiths_count} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </TabsContent>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border bg-background/50 px-2 py-1.5 text-center">
+      <div className="text-muted-foreground">{label}</div>
+      <div className="font-bold">{value}</div>
+    </div>
+  );
+}
+
