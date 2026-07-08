@@ -252,8 +252,7 @@ function StudentView() {
               <div className="flex flex-wrap items-center gap-3 text-xs mb-3">
                 <Legend className="bg-card border" label="لم يُسمَّع" />
                 <Legend className="bg-recited text-recited-foreground" label="مُسمَّع (حديث)" />
-                <Legend className="bg-amber-500/80 text-white" label="قديم" />
-                <Legend className="bg-archived text-archived-foreground" label="سنة سابقة" />
+                <Legend className="bg-archived text-archived-foreground" label="قديم / سنة سابقة" />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {NAWAWI_HADITHS.map((h) => {
@@ -263,7 +262,7 @@ function StudentView() {
                       "rounded-md border px-3 py-2 text-sm",
                       !s && "bg-card",
                       s === "recited" && "bg-recited text-recited-foreground border-recited",
-                      s === "old" && "bg-amber-500/80 text-white border-amber-600",
+                      s === "old" && "bg-archived text-archived-foreground border-archived/70",
                       s === "archived" && "bg-archived text-archived-foreground border-archived/70",
                     )}>
                       <span className="font-bold">{h.number}.</span> {h.title}
