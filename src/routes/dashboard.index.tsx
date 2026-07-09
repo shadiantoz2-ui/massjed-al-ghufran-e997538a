@@ -38,10 +38,22 @@ function Home() {
   const [newYear, setNewYear] = useState<number>(new Date().getFullYear());
   const [saving, setSaving] = useState(false);
 
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [editCourse, setEditCourse] = useState<CourseRow | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
+
+  const isAdmin = roles.includes("admin");
+
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
     const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
     setCourse(row);
+  }
+
+  async function loadCourses() {
+    const { data } = await supabase.rpc("list_courses" as any);
+    setCourses((data ?? []) as CourseRow[]);
   }
 
   useEffect(() => {
@@ -49,8 +61,10 @@ function Home() {
       const { count: sc } = await supabase.from("students").select("id", { count: "exact", head: true });
       setStudentsCount(sc ?? 0);
       await loadCourse();
+      if (isAdmin) await loadCourses();
     })();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
