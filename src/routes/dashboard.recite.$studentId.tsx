@@ -275,8 +275,8 @@ function RecitePage() {
   async function saveBulk(e: React.FormEvent) {
     e.preventDefault();
     const rows: any[] = [];
-    const existingPages = new Set(recs.filter((r) => !r.archived && r.kind === "page").map((r) => r.page_number));
-    const existingSurahs = new Set(recs.filter((r) => !r.archived && r.kind === "surah").map((r) => r.surah_number));
+    const existingPages = new Set(recs.filter((r) => r.kind === "page").map((r) => r.page_number));
+    const existingSurahs = new Set(recs.filter((r) => r.kind === "surah").map((r) => r.surah_number));
     const duplicates: string[] = [];
 
     if (bulkTab === "pages") {
