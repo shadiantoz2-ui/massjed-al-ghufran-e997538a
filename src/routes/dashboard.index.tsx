@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { GraduationCap, CalendarClock, Search } from "lucide-react";
+import { GraduationCap, CalendarClock, Search, Pencil, Trash2 } from "lucide-react";
+
+type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
