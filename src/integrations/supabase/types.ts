@@ -472,6 +472,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_course: { Args: { _course_id: string }; Returns: undefined }
       get_current_course: {
         Args: never
         Returns: {
@@ -583,6 +584,17 @@ export type Database = {
         Args: { _student_id: string; _uid: string }
         Returns: boolean
       }
+      list_courses: {
+        Args: never
+        Returns: {
+          ended_at: string
+          id: string
+          is_current: boolean
+          name: string
+          started_at: string
+          year: number
+        }[]
+      }
       list_teachers: {
         Args: never
         Returns: {
@@ -601,6 +613,10 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_new_course: {
         Args: { _name: string; _year: number }
+        Returns: undefined
+      }
+      update_course: {
+        Args: { _course_id: string; _name: string; _year: number }
         Returns: undefined
       }
     }

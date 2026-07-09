@@ -209,14 +209,14 @@ function RecitePage() {
 
     if (!editing) {
       const dup = recs.find(
-        (r) => !r.archived && r.kind === kind &&
+        (r) => r.kind === kind &&
           (kind === "page" ? r.page_number === Number(pageNum) : r.surah_number === Number(surahNum)),
       );
       if (dup) {
         toast.warning(
           kind === "page"
-            ? `الصفحة ${pageNum} مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`
-            : `هذه السورة مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`,
+            ? `الصفحة ${pageNum} مُسجَّلة مسبقاً — لا يمكن تكرارها.`
+            : `هذه السورة مُسجَّلة مسبقاً — لا يمكن تكرارها.`,
         );
         setOpen(false);
         return;
@@ -275,8 +275,8 @@ function RecitePage() {
   async function saveBulk(e: React.FormEvent) {
     e.preventDefault();
     const rows: any[] = [];
-    const existingPages = new Set(recs.filter((r) => !r.archived && r.kind === "page").map((r) => r.page_number));
-    const existingSurahs = new Set(recs.filter((r) => !r.archived && r.kind === "surah").map((r) => r.surah_number));
+    const existingPages = new Set(recs.filter((r) => r.kind === "page").map((r) => r.page_number));
+    const existingSurahs = new Set(recs.filter((r) => r.kind === "surah").map((r) => r.surah_number));
     const duplicates: string[] = [];
 
     if (bulkTab === "pages") {
@@ -348,9 +348,9 @@ function RecitePage() {
   async function saveHadith(e: React.FormEvent) {
     e.preventDefault();
     if (!hadithNum) return toast.error("اختر رقم الحديث");
-    const dup = hadiths.find((h) => !h.archived && h.hadith_number === Number(hadithNum));
+    const dup = hadiths.find((h) => h.hadith_number === Number(hadithNum));
     if (dup) {
-      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً في هذه السنة — لم يُضَف.`);
+      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً — لا يمكن تكراره.`);
       setHadithOpen(false);
       return;
     }
@@ -400,9 +400,9 @@ function RecitePage() {
     e.preventDefault();
     if (!probeJuz) return toast.error("اختر الجزء");
     if (!editingProbe) {
-      const dup = probes.find((p) => !p.archived && p.juz_number === Number(probeJuz));
+      const dup = probes.find((p) => p.juz_number === Number(probeJuz));
       if (dup) {
-        toast.warning(`الجزء ${probeJuz} مُسبر مسبقاً في هذه السنة — لم يُضَف.`);
+        toast.warning(`الجزء ${probeJuz} مُسبر مسبقاً — لا يمكن تكراره.`);
         setProbeOpen(false);
         return;
       }

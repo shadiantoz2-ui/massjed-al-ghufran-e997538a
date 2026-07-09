@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { GraduationCap, CalendarClock, Search } from "lucide-react";
+import { GraduationCap, CalendarClock, Search, Pencil, Trash2 } from "lucide-react";
+
+type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
@@ -36,10 +38,22 @@ function Home() {
   const [newYear, setNewYear] = useState<number>(new Date().getFullYear());
   const [saving, setSaving] = useState(false);
 
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [editCourse, setEditCourse] = useState<CourseRow | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
+
+  const isAdmin = roles.includes("admin");
+
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
     const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
     setCourse(row);
+  }
+
+  async function loadCourses() {
+    const { data } = await supabase.rpc("list_courses" as any);
+    setCourses((data ?? []) as CourseRow[]);
   }
 
   useEffect(() => {
@@ -47,8 +61,10 @@ function Home() {
       const { count: sc } = await supabase.from("students").select("id", { count: "exact", head: true });
       setStudentsCount(sc ?? 0);
       await loadCourse();
+      if (isAdmin) await loadCourses();
     })();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +84,36 @@ function Home() {
     setNewOpen(false);
     setNewName("");
     await loadCourse();
+    if (isAdmin) await loadCourses();
+  }
+
+  function openEditCourse(c: CourseRow) {
+    setEditCourse(c);
+    setEditName(c.name);
+    setEditYear(c.year);
+  }
+
+  async function saveEditCourse(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editCourse) return;
+    if (!editName.trim()) return toast.error("أدخل اسم الدورة");
+    const { error } = await supabase.rpc("update_course" as any, {
+      _course_id: editCourse.id, _name: editName.trim(), _year: Number(editYear),
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم تحديث الدورة");
+    setEditCourse(null);
+    await loadCourse();
+    await loadCourses();
+  }
+
+  async function deleteCourse(c: CourseRow) {
+    if (!confirm(`حذف الدورة "${c.name} — ${c.year}" وجميع بياناتها (تسميعات، سبر، أحاديث، حضور، نقاط)؟\nلا يمكن التراجع.`)) return;
+    const { error } = await supabase.rpc("delete_course" as any, { _course_id: c.id });
+    if (error) return toast.error(error.message);
+    toast.success("تم حذف الدورة");
+    await loadCourse();
+    await loadCourses();
   }
 
   return (
@@ -140,6 +186,67 @@ function Home() {
             </p>
             <DialogFooter>
               <Button type="submit" disabled={saving}>{saving ? "جاري..." : "تأكيد وبدء الدورة"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-3 font-bold">إدارة الدورات</h2>
+          {courses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">لا توجد دورات.</p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {courses.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">
+                      {c.name} — {c.year}
+                      {c.is_current && (
+                        <span className="ms-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                          الحالية
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      بدأت: {new Date(c.started_at).toLocaleDateString("ar")}
+                      {c.ended_at && ` • انتهت: ${new Date(c.ended_at).toLocaleDateString("ar")}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="outline" onClick={() => openEditCourse(c)}>
+                      <Pencil className="size-3.5" /> تعديل
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deleteCourse(c)}>
+                      <Trash2 className="size-3.5" /> حذف
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            حذف الدورة يحذف جميع بياناتها (تسميعات، سبر، أحاديث، حضور، نقاط) نهائياً.
+          </p>
+        </Card>
+      )}
+
+      <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تعديل الدورة</DialogTitle></DialogHeader>
+          <form onSubmit={saveEditCourse} className="space-y-3">
+            <div>
+              <Label>اسم الدورة</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+            </div>
+            <div>
+              <Label>العام</Label>
+              <Input type="number" min={2000} max={2100} value={editYear}
+                onChange={(e) => setEditYear(Number(e.target.value))} required />
+            </div>
+            <DialogFooter>
+              <Button type="submit">حفظ</Button>
             </DialogFooter>
           </form>
         </DialogContent>
