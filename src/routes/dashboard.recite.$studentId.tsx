@@ -209,14 +209,14 @@ function RecitePage() {
 
     if (!editing) {
       const dup = recs.find(
-        (r) => !r.archived && r.kind === kind &&
+        (r) => r.kind === kind &&
           (kind === "page" ? r.page_number === Number(pageNum) : r.surah_number === Number(surahNum)),
       );
       if (dup) {
         toast.warning(
           kind === "page"
-            ? `الصفحة ${pageNum} مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`
-            : `هذه السورة مُسجَّلة مسبقاً في هذه السنة — لم تُضَف.`,
+            ? `الصفحة ${pageNum} مُسجَّلة مسبقاً — لا يمكن تكرارها.`
+            : `هذه السورة مُسجَّلة مسبقاً — لا يمكن تكرارها.`,
         );
         setOpen(false);
         return;
