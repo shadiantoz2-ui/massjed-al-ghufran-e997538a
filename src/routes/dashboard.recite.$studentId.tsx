@@ -348,9 +348,9 @@ function RecitePage() {
   async function saveHadith(e: React.FormEvent) {
     e.preventDefault();
     if (!hadithNum) return toast.error("اختر رقم الحديث");
-    const dup = hadiths.find((h) => !h.archived && h.hadith_number === Number(hadithNum));
+    const dup = hadiths.find((h) => h.hadith_number === Number(hadithNum));
     if (dup) {
-      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً في هذه السنة — لم يُضَف.`);
+      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً — لا يمكن تكراره.`);
       setHadithOpen(false);
       return;
     }
