@@ -190,6 +190,67 @@ function Home() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-3 font-bold">إدارة الدورات</h2>
+          {courses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">لا توجد دورات.</p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {courses.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">
+                      {c.name} — {c.year}
+                      {c.is_current && (
+                        <span className="ms-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                          الحالية
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      بدأت: {new Date(c.started_at).toLocaleDateString("ar")}
+                      {c.ended_at && ` • انتهت: ${new Date(c.ended_at).toLocaleDateString("ar")}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="outline" onClick={() => openEditCourse(c)}>
+                      <Pencil className="size-3.5" /> تعديل
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deleteCourse(c)}>
+                      <Trash2 className="size-3.5" /> حذف
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            حذف الدورة يحذف جميع بياناتها (تسميعات، سبر، أحاديث، حضور، نقاط) نهائياً.
+          </p>
+        </Card>
+      )}
+
+      <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تعديل الدورة</DialogTitle></DialogHeader>
+          <form onSubmit={saveEditCourse} className="space-y-3">
+            <div>
+              <Label>اسم الدورة</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+            </div>
+            <div>
+              <Label>العام</Label>
+              <Input type="number" min={2000} max={2100} value={editYear}
+                onChange={(e) => setEditYear(Number(e.target.value))} required />
+            </div>
+            <DialogFooter>
+              <Button type="submit">حفظ</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
