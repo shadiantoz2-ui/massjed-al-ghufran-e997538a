@@ -84,6 +84,36 @@ function Home() {
     setNewOpen(false);
     setNewName("");
     await loadCourse();
+    if (isAdmin) await loadCourses();
+  }
+
+  function openEditCourse(c: CourseRow) {
+    setEditCourse(c);
+    setEditName(c.name);
+    setEditYear(c.year);
+  }
+
+  async function saveEditCourse(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editCourse) return;
+    if (!editName.trim()) return toast.error("أدخل اسم الدورة");
+    const { error } = await supabase.rpc("update_course" as any, {
+      _course_id: editCourse.id, _name: editName.trim(), _year: Number(editYear),
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم تحديث الدورة");
+    setEditCourse(null);
+    await loadCourse();
+    await loadCourses();
+  }
+
+  async function deleteCourse(c: CourseRow) {
+    if (!confirm(`حذف الدورة "${c.name} — ${c.year}" وجميع بياناتها (تسميعات، سبر، أحاديث، حضور، نقاط)؟\nلا يمكن التراجع.`)) return;
+    const { error } = await supabase.rpc("delete_course" as any, { _course_id: c.id });
+    if (error) return toast.error(error.message);
+    toast.success("تم حذف الدورة");
+    await loadCourse();
+    await loadCourses();
   }
 
   return (
