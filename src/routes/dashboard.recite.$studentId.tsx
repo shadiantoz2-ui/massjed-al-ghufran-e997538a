@@ -400,9 +400,9 @@ function RecitePage() {
     e.preventDefault();
     if (!probeJuz) return toast.error("اختر الجزء");
     if (!editingProbe) {
-      const dup = probes.find((p) => !p.archived && p.juz_number === Number(probeJuz));
+      const dup = probes.find((p) => p.juz_number === Number(probeJuz));
       if (dup) {
-        toast.warning(`الجزء ${probeJuz} مُسبر مسبقاً في هذه السنة — لم يُضَف.`);
+        toast.warning(`الجزء ${probeJuz} مُسبر مسبقاً — لا يمكن تكراره.`);
         setProbeOpen(false);
         return;
       }
