@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { JUZ_30_SURAHS, JUZ_START_PAGES, TOTAL_PAGES } from "@/lib/quran-data";
 import { cn } from "@/lib/utils";
 
@@ -18,28 +19,32 @@ interface Props {
   onSurahClick?: (surahNumber: number) => void;
 }
 
-export function QuranProgressGrid({ recitations, onPageClick, onSurahClick }: Props) {
+export const QuranProgressGrid = memo(function QuranProgressGrid({ recitations, onPageClick, onSurahClick }: Props) {
   // Status per page: undefined | "recited" | "archived" (old counts as archived visually)
-  const pageStatus = new Map<number, "recited" | "archived">();
-  const surahStatus = new Map<number, "recited" | "archived">();
+  const { pageStatus, surahStatus } = useMemo(() => {
+    const pageStatus = new Map<number, "recited" | "archived">();
+    const surahStatus = new Map<number, "recited" | "archived">();
 
-  const effectiveStatus = (r: RecitationLite): "recited" | "archived" =>
-    r.archived || (r.recitation_type ?? "new") === "old" ? "archived" : "recited";
+    const effectiveStatus = (r: RecitationLite): "recited" | "archived" =>
+      r.archived || (r.recitation_type ?? "new") === "old" ? "archived" : "recited";
 
-  for (const r of recitations) {
-    const st = effectiveStatus(r);
-    if (r.kind === "page" && r.page_number) {
-      const cur = pageStatus.get(r.page_number);
-      if (!cur || (cur === "archived" && st === "recited")) {
-        pageStatus.set(r.page_number, st);
-      }
-    } else if (r.kind === "surah" && r.surah_number) {
-      const cur = surahStatus.get(r.surah_number);
-      if (!cur || (cur === "archived" && st === "recited")) {
-        surahStatus.set(r.surah_number, st);
+    for (const r of recitations) {
+      const st = effectiveStatus(r);
+      if (r.kind === "page" && r.page_number) {
+        const cur = pageStatus.get(r.page_number);
+        if (!cur || (cur === "archived" && st === "recited")) {
+          pageStatus.set(r.page_number, st);
+        }
+      } else if (r.kind === "surah" && r.surah_number) {
+        const cur = surahStatus.get(r.surah_number);
+        if (!cur || (cur === "archived" && st === "recited")) {
+          surahStatus.set(r.surah_number, st);
+        }
       }
     }
-  }
+    return { pageStatus, surahStatus };
+  }, [recitations]);
+
 
   return (
     <div className="space-y-8">
