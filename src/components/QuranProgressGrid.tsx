@@ -129,7 +129,8 @@ export const QuranProgressGrid = memo(function QuranProgressGrid({ recitations, 
       </section>
     </div>
   );
-}
+});
+
 
 function Legend({ className, label }: { className?: string; label: string }) {
   return (
