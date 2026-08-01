@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search, BookOpen, LogIn } from "lucide-react";
+import { Search, LogIn } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/")({
@@ -57,7 +58,7 @@ function Index() {
       <header className="border-b bg-card/50 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <BookOpen className="size-6 text-primary" />
+            <img src={logo} alt="شعار مسجد الغفران" className="h-10 w-auto dark:brightness-125" />
             <div>
               <div className="text-sm font-bold leading-tight">مسجد الغفران</div>
               <div className="text-xs text-muted-foreground leading-tight">منصة تسميعات القرآن</div>

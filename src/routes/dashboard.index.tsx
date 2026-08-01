@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { GraduationCap, CalendarClock, Search, Pencil, Trash2 } from "lucide-react";
+import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "lucide-react";
+import * as XLSX from "xlsx";
+import { cn } from "@/lib/utils";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
@@ -42,6 +44,9 @@ function Home() {
   const [editCourse, setEditCourse] = useState<CourseRow | null>(null);
   const [editName, setEditName] = useState("");
   const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
+
+  const [exportSel, setExportSel] = useState<string[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   const isAdmin = roles.includes("admin");
 
@@ -114,6 +119,44 @@ function Home() {
     toast.success("تم حذف الدورة");
     await loadCourse();
     await loadCourses();
+  }
+
+  async function exportExcel() {
+    if (exportSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
+    setExporting(true);
+    const { data, error } = await supabase.rpc("export_courses_data" as any, { _course_ids: exportSel });
+    setExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "اسم الأم": r.mother_name ?? "",
+      "رقم الأب": r.father_phone ?? "",
+      "رقم الأم": r.mother_phone ?? "",
+      "رقم التواصل": r.contact_phone ?? "",
+      "العنوان": r.address ?? "",
+      "عمل الأب": r.father_job ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "المواليد": r.birth_year ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "صفحات": r.pages_count,
+      "سور": r.surahs_count,
+      "سبر الأجزاء": r.probes_count,
+      "أحاديث": r.hadiths_count,
+      "حضور": r.present_count,
+      "تأخير": r.late_count,
+      "النقاط": r.total_points,
+    }));
+    const ws = XLSX.utils.json_to_sheet(mapped);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "بيانات الطلاب");
+    XLSX.writeFile(wb, `بيانات-الطلاب-${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast.success("تم تحميل الملف");
   }
 
   return (
@@ -229,6 +272,34 @@ function Home() {
           <p className="mt-3 text-xs text-muted-foreground">
             حذف الدورة يحذف جميع بياناتها (تسميعات، سبر، أحاديث، حضور، نقاط) نهائياً.
           </p>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل بيانات الطلاب (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">اختر دورة أو أكثر لتصديرها في ملف واحد.</p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = exportSel.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setExportSel((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportExcel} disabled={exporting}>
+            <Download className="size-4" /> {exporting ? "جاري التحميل..." : "تحميل ملف Excel"}
+          </Button>
         </Card>
       )}
 

@@ -473,6 +473,32 @@ export type Database = {
     }
     Functions: {
       delete_course: { Args: { _course_id: string }; Returns: undefined }
+      export_courses_data: {
+        Args: { _course_ids: string[] }
+        Returns: {
+          address: string
+          birth_year: number
+          contact_phone: string
+          course_name: string
+          course_year: number
+          father_job: string
+          father_name: string
+          father_phone: string
+          grade_level: string
+          hadiths_count: number
+          late_count: number
+          mother_name: string
+          mother_phone: string
+          nickname: string
+          pages_count: number
+          present_count: number
+          probes_count: number
+          student_name: string
+          surahs_count: number
+          teacher_name: string
+          total_points: number
+        }[]
+      }
       get_current_course: {
         Args: never
         Returns: {
@@ -615,6 +641,7 @@ export type Database = {
         Args: { _name: string; _year: number }
         Returns: undefined
       }
+      surah_points: { Args: { _surah: number }; Returns: number }
       update_course: {
         Args: { _course_id: string; _name: string; _year: number }
         Returns: undefined

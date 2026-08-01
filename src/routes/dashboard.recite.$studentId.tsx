@@ -90,7 +90,7 @@ function RecitePage() {
   const [studentTeacherId, setStudentTeacherId] = useState<string | null>(null);
   const [hadiths, setHadiths] = useState<FullHadith[]>([]);
   const [hadithOpen, setHadithOpen] = useState(false);
-  const [hadithNum, setHadithNum] = useState<number | "">("");
+  const [hadithNums, setHadithNums] = useState<number[]>([]);
   const [hadithGrade, setHadithGrade] = useState("excellent");
   const [hadithNotes, setHadithNotes] = useState("");
   const [hadithDate, setHadithDate] = useState<string>(new Date().toISOString().slice(0, 10));
@@ -136,7 +136,6 @@ function RecitePage() {
 
   // probe/hadith points input
   const [probePoints, setProbePoints] = useState<number | "">("");
-  const [hadithPoints, setHadithPoints] = useState<number | "">("");
 
   // points state
   const [totalPoints, setTotalPoints] = useState<number>(0);
@@ -347,23 +346,20 @@ function RecitePage() {
 
   async function saveHadith(e: React.FormEvent) {
     e.preventDefault();
-    if (!hadithNum) return toast.error("اختر رقم الحديث");
-    const dup = hadiths.find((h) => h.hadith_number === Number(hadithNum));
-    if (dup) {
-      toast.warning(`الحديث ${hadithNum} مُسجَّل مسبقاً — لا يمكن تكراره.`);
-      setHadithOpen(false);
-      return;
-    }
-    const payload: any = {
+    if (hadithNums.length === 0) return toast.error("اختر حديثاً واحداً على الأقل");
+    const already = hadithNums.filter((n) => hadiths.some((h) => h.hadith_number === n));
+    const toSave = hadithNums.filter((n) => !already.includes(n));
+    if (already.length) toast.warning(`الأحاديث المُسجَّلة مسبقاً تم تجاهلها: ${already.join("، ")}`);
+    if (toSave.length === 0) { setHadithOpen(false); return; }
+    const rows = toSave.map((n) => ({
       student_id: studentId, teacher_id: user!.id,
-      hadith_number: Number(hadithNum), grade: hadithGrade,
+      hadith_number: n, grade: hadithGrade,
       notes: hadithNotes || null, recitation_date: hadithDate,
-      points: hadithPoints === "" ? 0 : Number(hadithPoints),
       recitation_type: (canEditAll || canHalaqahHere) ? hadithType : "new",
-    };
-    const { error } = await supabase.from("hadith_recitations").insert(payload);
+    }));
+    const { error } = await supabase.from("hadith_recitations").insert(rows as any);
     if (error) return toast.error(error.message);
-    toast.success("تم تسجيل الحديث");
+    toast.success(`تم تسجيل ${toSave.length} حديث`);
     setHadithOpen(false);
     load();
   }
@@ -663,7 +659,7 @@ function RecitePage() {
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-bold">الأربعين النووية (42 حديث)</h2>
-              <Button size="sm" onClick={() => { setHadithNum(""); setHadithGrade("excellent"); setHadithNotes(""); setHadithPoints(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithType("new"); setHadithOpen(true); }}>
+              <Button size="sm" onClick={() => { setHadithNums([]); setHadithGrade("excellent"); setHadithNotes(""); setHadithDate(new Date().toISOString().slice(0,10)); setHadithType("new"); setHadithOpen(true); }}>
                 <Layers className="size-4" /> تسجيل حديث
               </Button>
             </div>
@@ -684,10 +680,9 @@ function RecitePage() {
                   )}
                     onClick={() => {
                       if (!canRecord) return;
-                      setHadithNum(h.number);
+                      setHadithNums([h.number]);
                       setHadithGrade("excellent");
                       setHadithNotes("");
-                      setHadithPoints("");
                       setHadithDate(new Date().toISOString().slice(0,10));
                       setHadithType("new");
                       setHadithOpen(true);
@@ -840,15 +835,34 @@ function RecitePage() {
           <DialogHeader><DialogTitle>تسجيل حديث</DialogTitle></DialogHeader>
           <form onSubmit={saveHadith} className="space-y-3">
             <div>
-              <Label>الحديث</Label>
-              <Select value={hadithNum ? String(hadithNum) : ""} onValueChange={(v) => setHadithNum(Number(v))}>
-                <SelectTrigger><SelectValue placeholder="اختر الحديث" /></SelectTrigger>
-                <SelectContent>
-                  {NAWAWI_HADITHS.map((h) => (
-                    <SelectItem key={h.number} value={String(h.number)}>{h.number}. {h.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>الأحاديث (يمكن اختيار أكثر من حديث)</Label>
+              <div className="mt-1 max-h-56 space-y-1 overflow-y-auto rounded-md border p-2">
+                {NAWAWI_HADITHS.map((h) => {
+                  const selected = hadithNums.includes(h.number);
+                  const done = hadiths.some((x) => x.hadith_number === h.number);
+                  return (
+                    <button
+                      type="button"
+                      key={h.number}
+                      disabled={done}
+                      onClick={() =>
+                        setHadithNums((prev) =>
+                          prev.includes(h.number) ? prev.filter((n) => n !== h.number) : [...prev, h.number],
+                        )
+                      }
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded px-2 py-1 text-right text-sm transition",
+                        done && "opacity-40 cursor-not-allowed",
+                        !done && selected && "bg-primary text-primary-foreground",
+                        !done && !selected && "hover:bg-accent",
+                      )}
+                    >
+                      <span className="font-bold">{h.number}.</span> {h.title}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">كل حديث يُمنح نقطتان تلقائياً.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -879,12 +893,6 @@ function RecitePage() {
                 </Select>
               </div>
             )}
-            <div>
-              <Label>النقاط المستحقة</Label>
-              <Input type="number" min={0} value={hadithPoints}
-                onChange={(e) => setHadithPoints(e.target.value ? Number(e.target.value) : "")}
-                placeholder="عدد النقاط" />
-            </div>
             <div>
               <Label>ملاحظات</Label>
               <Textarea rows={2} value={hadithNotes} onChange={(e) => setHadithNotes(e.target.value)} />

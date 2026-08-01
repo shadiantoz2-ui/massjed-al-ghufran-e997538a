@@ -2,7 +2,8 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, GraduationCap, LogOut, Home, CalendarClock } from "lucide-react";
+import { Users, GraduationCap, LogOut, Home, CalendarClock } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/lib/quran-data";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -41,7 +42,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-card sticky top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <BookOpen className="size-6 text-primary" />
+            <img src={logo} alt="شعار مسجد الغفران" className="h-9 w-auto dark:brightness-125" />
             <div className="leading-tight">
               <div className="text-sm font-bold">مسجد الغفران</div>
               <div className="text-xs text-muted-foreground">منصة التسميعات</div>
