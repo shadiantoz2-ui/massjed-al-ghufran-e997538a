@@ -499,6 +499,25 @@ export type Database = {
           total_points: number
         }[]
       }
+      export_points_data: {
+        Args: { _course_id: string }
+        Returns: {
+          attendance_points: number
+          course_name: string
+          course_year: number
+          father_name: string
+          grade_level: string
+          hadiths_points: number
+          manual_points: number
+          nickname: string
+          pages_points: number
+          probes_points: number
+          student_name: string
+          surahs_points: number
+          teacher_name: string
+          total_points: number
+        }[]
+      }
       get_current_course: {
         Args: never
         Returns: {

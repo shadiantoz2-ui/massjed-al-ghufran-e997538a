@@ -47,6 +47,9 @@ function Home() {
 
   const [exportSel, setExportSel] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [pointsCourse, setPointsCourse] = useState<string | null>(null);
+  const [pointsExporting, setPointsExporting] = useState(false);
+
 
   const isAdmin = roles.includes("admin");
 
@@ -159,7 +162,40 @@ function Home() {
     toast.success("تم تحميل الملف");
   }
 
+  async function exportPointsExcel() {
+    if (!pointsCourse) return toast.error("اختر دورة");
+    setPointsExporting(true);
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: pointsCourse });
+    setPointsExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "نقاط الصفحات": r.pages_points,
+      "نقاط السور": r.surahs_points,
+      "نقاط سبر الأجزاء": r.probes_points,
+      "نقاط الأحاديث": r.hadiths_points,
+      "نقاط الحضور": r.attendance_points,
+      "نقاط إضافية/خصم": r.manual_points,
+      "مجموع النقاط": r.total_points,
+    }));
+    const ws = XLSX.utils.json_to_sheet(mapped);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "نقاط الطلاب");
+    const c = courses.find((x) => x.id === pointsCourse);
+    XLSX.writeFile(wb, `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
   return (
+
     <div className="space-y-6">
       {user && (
         <Card className="p-4 bg-primary/5 border-primary/20">
@@ -302,6 +338,35 @@ function Home() {
           </Button>
         </Card>
       )}
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل نقاط الطلاب (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط الطلاب فيها.</p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = pointsCourse === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setPointsCourse(on ? null : c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportPointsExcel} disabled={pointsExporting}>
+            <Download className="size-4" /> {pointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
+          </Button>
+        </Card>
+      )}
+
 
       <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>
         <DialogContent dir="rtl">
