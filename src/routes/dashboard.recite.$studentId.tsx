@@ -788,10 +788,14 @@ function RecitePage() {
             {canManageAttendance && (
               <Card className="p-5 space-y-3">
                 <h3 className="font-bold flex items-center gap-2"><CalendarCheck className="size-4" /> تسجيل حضور</h3>
-                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                   <div>
-                    <Label>التاريخ</Label>
-                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} required />
+                    <Label>عدد أيام الحضور</Label>
+                    <Input
+                      type="number" min={1} max={100} value={attCount}
+                      onChange={(e) => setAttCount(e.target.value === "" ? "" : Number(e.target.value))}
+                      required
+                    />
                   </div>
                   <div>
                     <Label>الحالة</Label>
@@ -803,8 +807,13 @@ function RecitePage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label>التاريخ (اختياري)</Label>
+                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} />
+                  </div>
                   <Button type="submit">تسجيل الحضور</Button>
                 </form>
+
               </Card>
             )}
             <Card className="p-5">
