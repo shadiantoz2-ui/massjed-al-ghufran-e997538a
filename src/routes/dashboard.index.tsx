@@ -15,6 +15,16 @@ import { cn } from "@/lib/utils";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
+function makeRtlWorkbook(rows: Record<string, any>[], sheetName: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  ws["!cols"] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 18 }));
+  (wb as any).Views = [{ RTL: true }];
+  (wb as any).Workbook = { ...(wb as any).Workbook, Views: [{ RTL: true }] };
+  return wb;
+}
+
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
   component: DashboardHome,
