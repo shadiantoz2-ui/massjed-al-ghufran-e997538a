@@ -145,8 +145,9 @@ function RecitePage() {
 
   // attendance state
   const [attendance, setAttendance] = useState<any[]>([]);
-  const [attDate, setAttDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [attDate, setAttDate] = useState<string>("");
   const [attStatus, setAttStatus] = useState<"present" | "late">("present");
+  const [attCount, setAttCount] = useState<number | "">(1);
 
   async function load() {
     const [{ data: s }, { data: r }, { data: p }, { data: h }, { data: tp }, { data: pe }, { data: att }] = await Promise.all([
