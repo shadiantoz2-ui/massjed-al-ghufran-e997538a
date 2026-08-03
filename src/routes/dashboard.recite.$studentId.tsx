@@ -809,7 +809,7 @@ function RecitePage() {
 
                   <AttendanceCalendar
                     selected={attDates}
-                    recorded={attendance.map((a) => a.attendance_date)}
+                    recorded={attendance.map((a: any) => a.attendance_date)}
                     onToggle={(d) =>
                       setAttDates((prev) =>
                         prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
