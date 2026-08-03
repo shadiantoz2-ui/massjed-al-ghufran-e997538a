@@ -49,6 +49,8 @@ function Home() {
   const [exporting, setExporting] = useState(false);
   const [pointsCourse, setPointsCourse] = useState<string | null>(null);
   const [pointsExporting, setPointsExporting] = useState(false);
+  const [recCourse, setRecCourse] = useState<string | null>(null);
+  const [recExporting, setRecExporting] = useState(false);
 
 
   const isAdmin = roles.includes("admin");
