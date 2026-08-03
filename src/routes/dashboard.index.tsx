@@ -407,6 +407,36 @@ function Home() {
         </Card>
       )}
 
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            اختر الدورة لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = recCourse === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setRecCourse(on ? null : c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportRecitationsExcel} disabled={recExporting}>
+            <Download className="size-4" /> {recExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
+          </Button>
+        </Card>
+      )}
+
 
       <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>
         <DialogContent dir="rtl">
