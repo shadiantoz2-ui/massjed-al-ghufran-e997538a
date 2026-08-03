@@ -22,6 +22,8 @@ import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { toast } from "sonner";
 import { ArrowRight, Pencil, Trash2, Layers, Info, Award, CalendarCheck, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AttendanceCalendar } from "@/components/AttendanceCalendar";
+
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
