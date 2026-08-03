@@ -157,9 +157,7 @@ function Home() {
       "تأخير": r.late_count,
       "النقاط": r.total_points,
     }));
-    const ws = XLSX.utils.json_to_sheet(mapped);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "بيانات الطلاب");
+    const wb = makeRtlWorkbook(mapped, "بيانات الطلاب");
     XLSX.writeFile(wb, `بيانات-الطلاب-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
