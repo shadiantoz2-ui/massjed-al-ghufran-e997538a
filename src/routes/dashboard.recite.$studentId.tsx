@@ -466,16 +466,22 @@ function RecitePage() {
 
   async function addAttendance(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("attendance").insert({
+    const n = Number(attCount);
+    if (!Number.isInteger(n) || n < 1 || n > 100) return toast.error("أدخل عدد أيام صحيح (1-100)");
+    const baseDate = attDate || new Date().toISOString().slice(0, 10);
+    const rows = Array.from({ length: n }, () => ({
       student_id: studentId,
-      attendance_date: attDate,
+      attendance_date: baseDate,
       status: attStatus,
       created_by: user!.id,
-    });
+    }));
+    const { error } = await supabase.from("attendance").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success("تم تسجيل الحضور");
+    toast.success(`تم تسجيل ${n} حضور`);
+    setAttCount(1);
     load();
   }
+
 
   async function removeAttendance(id: string) {
     if (!confirm("حذف هذا الحضور؟")) return;
