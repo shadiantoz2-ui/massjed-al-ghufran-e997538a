@@ -42,7 +42,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <header className="border-b bg-card sticky top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={logo} alt="شعار مسجد الغفران" className="h-9 w-auto dark:brightness-125" />
+            <img src={logo} alt="شعار مسجد الغفران" className="h-13 w-auto dark:brightness-125" style={{ height: "3.25rem" }} />
             <div className="leading-tight">
               <div className="text-sm font-bold">مسجد الغفران</div>
               <div className="text-xs text-muted-foreground">منصة التسميعات</div>
