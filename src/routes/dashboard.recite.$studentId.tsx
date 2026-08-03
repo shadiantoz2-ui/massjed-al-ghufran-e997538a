@@ -786,31 +786,47 @@ function RecitePage() {
             {canManageAttendance && (
               <Card className="p-5 space-y-3">
                 <h3 className="font-bold flex items-center gap-2"><CalendarCheck className="size-4" /> تسجيل حضور</h3>
-                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                  <div>
-                    <Label>عدد أيام الحضور</Label>
-                    <Input
-                      type="number" min={1} max={100} value={attCount}
-                      onChange={(e) => setAttCount(e.target.value === "" ? "" : Number(e.target.value))}
-                      required
-                    />
+                <form onSubmit={addAttendance} className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>الحالة</Label>
+                      <Select value={attStatus} onValueChange={(v) => setAttStatus(v as any)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="present">حاضر (+4)</SelectItem>
+                          <SelectItem value="late">حضور متأخر (+2)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-sm text-muted-foreground">
+                        الأيام المحددة: <strong className="text-foreground">{attDates.length}</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label>الحالة</Label>
-                    <Select value={attStatus} onValueChange={(v) => setAttStatus(v as any)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="present">حاضر (+4)</SelectItem>
-                        <SelectItem value="late">حضور متأخر (+2)</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                  <AttendanceCalendar
+                    selected={attDates}
+                    recorded={attendance.map((a) => a.attendance_date)}
+                    onToggle={(d) =>
+                      setAttDates((prev) =>
+                        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+                      )
+                    }
+                  />
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={attDates.length === 0}>
+                      تسجيل الحضور ({attDates.length})
+                    </Button>
+                    {attDates.length > 0 && (
+                      <Button type="button" variant="outline" onClick={() => setAttDates([])}>
+                        محو التحديد
+                      </Button>
+                    )}
                   </div>
-                  <div>
-                    <Label>التاريخ (اختياري)</Label>
-                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} />
-                  </div>
-                  <Button type="submit">تسجيل الحضور</Button>
                 </form>
+
 
               </Card>
             )}
