@@ -145,8 +145,9 @@ function RecitePage() {
 
   // attendance state
   const [attendance, setAttendance] = useState<any[]>([]);
-  const [attDate, setAttDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [attDate, setAttDate] = useState<string>("");
   const [attStatus, setAttStatus] = useState<"present" | "late">("present");
+  const [attCount, setAttCount] = useState<number | "">(1);
 
   async function load() {
     const [{ data: s }, { data: r }, { data: p }, { data: h }, { data: tp }, { data: pe }, { data: att }] = await Promise.all([
@@ -465,16 +466,22 @@ function RecitePage() {
 
   async function addAttendance(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("attendance").insert({
+    const n = Number(attCount);
+    if (!Number.isInteger(n) || n < 1 || n > 100) return toast.error("أدخل عدد أيام صحيح (1-100)");
+    const baseDate = attDate || new Date().toISOString().slice(0, 10);
+    const rows = Array.from({ length: n }, () => ({
       student_id: studentId,
-      attendance_date: attDate,
+      attendance_date: baseDate,
       status: attStatus,
       created_by: user!.id,
-    });
+    }));
+    const { error } = await supabase.from("attendance").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success("تم تسجيل الحضور");
+    toast.success(`تم تسجيل ${n} حضور`);
+    setAttCount(1);
     load();
   }
+
 
   async function removeAttendance(id: string) {
     if (!confirm("حذف هذا الحضور؟")) return;
@@ -781,10 +788,14 @@ function RecitePage() {
             {canManageAttendance && (
               <Card className="p-5 space-y-3">
                 <h3 className="font-bold flex items-center gap-2"><CalendarCheck className="size-4" /> تسجيل حضور</h3>
-                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <form onSubmit={addAttendance} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                   <div>
-                    <Label>التاريخ</Label>
-                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} required />
+                    <Label>عدد أيام الحضور</Label>
+                    <Input
+                      type="number" min={1} max={100} value={attCount}
+                      onChange={(e) => setAttCount(e.target.value === "" ? "" : Number(e.target.value))}
+                      required
+                    />
                   </div>
                   <div>
                     <Label>الحالة</Label>
@@ -796,8 +807,13 @@ function RecitePage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label>التاريخ (اختياري)</Label>
+                    <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} />
+                  </div>
                   <Button type="submit">تسجيل الحضور</Button>
                 </form>
+
               </Card>
             )}
             <Card className="p-5">
