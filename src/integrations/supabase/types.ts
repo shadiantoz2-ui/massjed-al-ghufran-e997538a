@@ -518,6 +518,27 @@ export type Database = {
           total_points: number
         }[]
       }
+      export_recitations_data: {
+        Args: { _course_id: string }
+        Returns: {
+          course_name: string
+          course_year: number
+          father_name: string
+          grade_level: string
+          hadiths_count: number
+          hadiths_list: string
+          nickname: string
+          pages_count: number
+          pages_list: string
+          probes_count: number
+          probes_list: string
+          student_name: string
+          surahs_count: number
+          surahs_list: string
+          teacher_name: string
+          total_points: number
+        }[]
+      }
       get_current_course: {
         Args: never
         Returns: {

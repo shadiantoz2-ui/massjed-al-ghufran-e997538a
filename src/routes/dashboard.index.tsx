@@ -15,6 +15,16 @@ import { cn } from "@/lib/utils";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
+function makeRtlWorkbook(rows: Record<string, any>[], sheetName: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  ws["!cols"] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 18 }));
+  (wb as any).Views = [{ RTL: true }];
+  (wb as any).Workbook = { ...(wb as any).Workbook, Views: [{ RTL: true }] };
+  return wb;
+}
+
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
   component: DashboardHome,
@@ -49,6 +59,8 @@ function Home() {
   const [exporting, setExporting] = useState(false);
   const [pointsCourse, setPointsCourse] = useState<string | null>(null);
   const [pointsExporting, setPointsExporting] = useState(false);
+  const [recCourse, setRecCourse] = useState<string | null>(null);
+  const [recExporting, setRecExporting] = useState(false);
 
 
   const isAdmin = roles.includes("admin");
@@ -155,9 +167,7 @@ function Home() {
       "تأخير": r.late_count,
       "النقاط": r.total_points,
     }));
-    const ws = XLSX.utils.json_to_sheet(mapped);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "بيانات الطلاب");
+    const wb = makeRtlWorkbook(mapped, "بيانات الطلاب");
     XLSX.writeFile(wb, `بيانات-الطلاب-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
@@ -186,11 +196,41 @@ function Home() {
       "نقاط إضافية/خصم": r.manual_points,
       "مجموع النقاط": r.total_points,
     }));
-    const ws = XLSX.utils.json_to_sheet(mapped);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "نقاط الطلاب");
+    const wb = makeRtlWorkbook(mapped, "نقاط الطلاب");
     const c = courses.find((x) => x.id === pointsCourse);
     XLSX.writeFile(wb, `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
+  async function exportRecitationsExcel() {
+    if (!recCourse) return toast.error("اختر دورة");
+    setRecExporting(true);
+    const { data, error } = await supabase.rpc("export_recitations_data" as any, { _course_id: recCourse });
+    setRecExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "عدد الصفحات": r.pages_count,
+      "أرقام الصفحات": r.pages_list ?? "",
+      "عدد السور": r.surahs_count,
+      "أرقام السور": r.surahs_list ?? "",
+      "عدد سبر الأجزاء": r.probes_count,
+      "أرقام الأجزاء": r.probes_list ?? "",
+      "عدد الأحاديث": r.hadiths_count,
+      "أرقام الأحاديث": r.hadiths_list ?? "",
+      "مجموع النقاط": r.total_points,
+    }));
+    const wb = makeRtlWorkbook(mapped, "تسميعات الطلاب");
+    const c = courses.find((x) => x.id === recCourse);
+    XLSX.writeFile(wb, `تسميعات-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
@@ -363,6 +403,36 @@ function Home() {
           </div>
           <Button className="mt-4" onClick={exportPointsExcel} disabled={pointsExporting}>
             <Download className="size-4" /> {pointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
+          </Button>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            اختر الدورة لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = recCourse === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setRecCourse(on ? null : c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportRecitationsExcel} disabled={recExporting}>
+            <Download className="size-4" /> {recExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
           </Button>
         </Card>
       )}
