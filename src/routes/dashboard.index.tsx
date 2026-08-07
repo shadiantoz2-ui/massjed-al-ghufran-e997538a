@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
+import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
