@@ -274,6 +274,8 @@ function Home() {
         )}
       </Card>
 
+      {(roles.includes("admin") || roles.includes("supervisor")) && <TeachersStudentsPanel />}
+
       {roles.includes("admin") && (
         <Card className="p-5 border-amber-400/40 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/30">
           <h2 className="font-bold">بدء دورة جديدة</h2>
