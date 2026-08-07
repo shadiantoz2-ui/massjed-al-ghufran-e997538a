@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
+import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
@@ -273,6 +274,8 @@ function Home() {
           </ul>
         )}
       </Card>
+
+      {(roles.includes("admin") || roles.includes("supervisor")) && <TeachersStudentsPanel />}
 
       {roles.includes("admin") && (
         <Card className="p-5 border-amber-400/40 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/30">
