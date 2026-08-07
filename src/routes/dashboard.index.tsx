@@ -10,21 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import { downloadRtlXlsx } from "@/lib/xlsx-export";
 import { cn } from "@/lib/utils";
 import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
-
-function makeRtlWorkbook(rows: Record<string, any>[], sheetName: string) {
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  ws["!cols"] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 18 }));
-  (wb as any).Views = [{ RTL: true }];
-  (wb as any).Workbook = { ...(wb as any).Workbook, Views: [{ RTL: true }] };
-  return wb;
-}
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
@@ -79,10 +69,15 @@ function Home() {
 
   useEffect(() => {
     (async () => {
-      const { count: sc } = await supabase.from("students").select("id", { count: "exact", head: true });
-      setStudentsCount(sc ?? 0);
-      await loadCourse();
-      if (isAdmin) await loadCourses();
+      const tasks: Promise<unknown>[] = [
+        supabase
+          .from("students")
+          .select("id", { count: "exact", head: true })
+          .then(({ count }) => setStudentsCount(count ?? 0)),
+        loadCourse(),
+      ];
+      if (isAdmin) tasks.push(loadCourses());
+      await Promise.all(tasks);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
@@ -168,8 +163,7 @@ function Home() {
       "تأخير": r.late_count,
       "النقاط": r.total_points,
     }));
-    const wb = makeRtlWorkbook(mapped, "بيانات الطلاب");
-    XLSX.writeFile(wb, `بيانات-الطلاب-${new Date().toISOString().slice(0,10)}.xlsx`);
+    await downloadRtlXlsx(mapped, "بيانات الطلاب", `بيانات-الطلاب-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
@@ -197,9 +191,8 @@ function Home() {
       "نقاط إضافية/خصم": r.manual_points,
       "مجموع النقاط": r.total_points,
     }));
-    const wb = makeRtlWorkbook(mapped, "نقاط الطلاب");
     const c = courses.find((x) => x.id === pointsCourse);
-    XLSX.writeFile(wb, `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "نقاط الطلاب", `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
@@ -229,9 +222,8 @@ function Home() {
       "أرقام الأحاديث": r.hadiths_list ?? "",
       "مجموع النقاط": r.total_points,
     }));
-    const wb = makeRtlWorkbook(mapped, "تسميعات الطلاب");
     const c = courses.find((x) => x.id === recCourse);
-    XLSX.writeFile(wb, `تسميعات-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "تسميعات الطلاب", `تسميعات-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
