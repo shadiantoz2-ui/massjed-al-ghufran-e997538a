@@ -69,7 +69,7 @@ function Home() {
 
   useEffect(() => {
     (async () => {
-      const tasks: Promise<unknown>[] = [
+      const tasks: PromiseLike<unknown>[] = [
         supabase
           .from("students")
           .select("id", { count: "exact", head: true })
