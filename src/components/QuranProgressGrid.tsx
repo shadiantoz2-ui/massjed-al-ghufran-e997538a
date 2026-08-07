@@ -56,14 +56,12 @@ export const QuranProgressGrid = memo(function QuranProgressGrid({ recitations, 
       </div>
 
       {/* Juz 1..29 page grids */}
-      {JUZ_START_PAGES.map((startPage, i) => {
-        const juz = i + 1;
-        const endPage = juz === 29 ? TOTAL_PAGES : JUZ_START_PAGES[juz] - 1;
-        const pages: number[] = [];
-        for (let p = startPage; p <= endPage; p++) pages.push(p);
-
+      {JUZ_SECTIONS.map(({ juz, startPage, endPage, pages }) => {
         return (
-          <section key={juz}>
+          <section
+            key={juz}
+            style={{ contentVisibility: "auto", containIntrinsicSize: "auto 220px" }}
+          >
             <header className="mb-2 flex items-baseline justify-between border-b pb-1">
               <h3 className="font-bold text-primary">الجزء {juz}</h3>
               <span className="text-xs text-muted-foreground">
@@ -131,6 +129,14 @@ export const QuranProgressGrid = memo(function QuranProgressGrid({ recitations, 
   );
 });
 
+
+const JUZ_SECTIONS = JUZ_START_PAGES.map((startPage, i) => {
+  const juz = i + 1;
+  const endPage = juz === 29 ? TOTAL_PAGES : JUZ_START_PAGES[juz] - 1;
+  const pages: number[] = [];
+  for (let p = startPage; p <= endPage; p++) pages.push(p);
+  return { juz, startPage, endPage, pages };
+});
 
 function Legend({ className, label }: { className?: string; label: string }) {
   return (
