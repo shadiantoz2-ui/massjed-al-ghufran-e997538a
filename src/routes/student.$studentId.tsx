@@ -47,6 +47,24 @@ interface HadithRow {
   recitation_type?: string | null;
 }
 
+interface PointEventRow {
+  id: string;
+  points: number;
+  source: string;
+  reason: string | null;
+  created_at: string;
+  academic_year: number | null;
+  archived: boolean;
+}
+
+const POINT_SOURCE_LABELS: Record<string, string> = {
+  recitation: "التسميعات",
+  probe: "سبر الأجزاء في الأوقاف",
+  hadith: "الأربعين النووية",
+  attendance: "الحضور",
+  manual: "نقاط يدوية",
+};
+
 function StudentView() {
   const { studentId } = Route.useParams();
   const { session } = useAuth();
@@ -55,6 +73,7 @@ function StudentView() {
   const [full, setFull] = useState<any[]>([]);
   const [probes, setProbes] = useState<ProbeRow[]>([]);
   const [hadiths, setHadiths] = useState<HadithRow[]>([]);
+  const [pointEvents, setPointEvents] = useState<PointEventRow[]>([]);
   const [totalPoints, setTotalPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
@@ -64,18 +83,20 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }, { data: pe }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
         supabase.rpc("get_student_probes", { _student_id: studentId }),
         supabase.rpc("get_student_hadiths", { _student_id: studentId }),
         supabase.rpc("get_student_total_points", { _student_id: studentId }),
+        supabase.rpc("get_student_point_events", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
       setProbes((pr ?? []) as ProbeRow[]);
       setHadiths((hd ?? []) as HadithRow[]);
+      setPointEvents((pe ?? []) as PointEventRow[]);
       setTotalPoints(typeof pts === "number" ? pts : 0);
       setLoading(false);
     })();
@@ -118,6 +139,21 @@ function StudentView() {
         : "recited";
     if (rank(next) > rank(cur)) hadithStatus.set(h.hadith_number, next);
   }
+
+  const groupedPoints = new Map<string, PointEventRow[]>();
+  for (const pe of pointEvents) {
+    if (pe.archived) continue;
+    const list = groupedPoints.get(pe.source) ?? [];
+    list.push(pe);
+    groupedPoints.set(pe.source, list);
+  }
+  const groupTotals = Array.from(groupedPoints.entries()).map(([source, items]) => ({
+    source,
+    label: POINT_SOURCE_LABELS[source] ?? source,
+    total: items.reduce((sum, i) => sum + i.points, 0),
+    items,
+  }));
+  const pointsLogTotal = groupTotals.reduce((sum, g) => sum + g.total, 0);
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -173,6 +209,7 @@ function StudentView() {
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
             <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
             <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
+            <TabsTrigger value="points" className="flex-1">سجل النقاط</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recitations" className="pt-4">
@@ -270,6 +307,49 @@ function StudentView() {
                   );
                 })}
               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="points" className="pt-4">
+            <Card className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 className="font-bold">سجل النقاط</h2>
+                <div className="text-sm">
+                  المجموع النهائي: <span className="font-black text-primary text-lg">{pointsLogTotal}</span> نقطة
+                </div>
+              </div>
+              {groupTotals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">لا توجد نقاط مسجَّلة بعد.</p>
+              ) : (
+                <div className="space-y-4">
+                  {groupTotals.map((group) => (
+                    <div key={group.source} className="rounded-lg border bg-card/50 overflow-hidden">
+                      <div className="flex items-center justify-between gap-3 bg-primary/5 px-4 py-3">
+                        <h3 className="font-bold text-sm">{group.label}</h3>
+                        <div className="text-sm">
+                          المجموع: <span className="font-bold text-primary">{group.total}</span> نقطة
+                        </div>
+                      </div>
+                      <ul className="divide-y">
+                        {group.items.map((item) => (
+                          <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{item.reason || item.source}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(item.created_at).toLocaleDateString("ar-SY")}
+                                {item.academic_year ? ` • ${item.academic_year}` : ""}
+                              </div>
+                            </div>
+                            <div className={`font-bold whitespace-nowrap ${item.points >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              {item.points > 0 ? "+" : ""}{item.points}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
