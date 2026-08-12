@@ -83,18 +83,20 @@ function StudentView() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }] = await Promise.all([
+      const [{ data: basic }, { data: rec }, { data: pr }, { data: hd }, { data: pts }, { data: pe }] = await Promise.all([
         supabase.rpc("get_student_basic", { _student_id: studentId }),
         supabase.rpc("get_student_recitations", { _student_id: studentId }),
         supabase.rpc("get_student_probes", { _student_id: studentId }),
         supabase.rpc("get_student_hadiths", { _student_id: studentId }),
         supabase.rpc("get_student_total_points", { _student_id: studentId }),
+        supabase.rpc("get_student_point_events", { _student_id: studentId }),
       ]);
       if (basic && basic.length > 0) setName(basic[0].full_name);
       setRecitations((rec ?? []) as RecitationLite[]);
       setFull(rec ?? []);
       setProbes((pr ?? []) as ProbeRow[]);
       setHadiths((hd ?? []) as HadithRow[]);
+      setPointEvents((pe ?? []) as PointEventRow[]);
       setTotalPoints(typeof pts === "number" ? pts : 0);
       setLoading(false);
     })();
