@@ -309,6 +309,49 @@ function StudentView() {
               </div>
             </Card>
           </TabsContent>
+
+          <TabsContent value="points" className="pt-4">
+            <Card className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 className="font-bold">سجل النقاط</h2>
+                <div className="text-sm">
+                  المجموع النهائي: <span className="font-black text-primary text-lg">{pointsLogTotal}</span> نقطة
+                </div>
+              </div>
+              {groupTotals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">لا توجد نقاط مسجَّلة بعد.</p>
+              ) : (
+                <div className="space-y-4">
+                  {groupTotals.map((group) => (
+                    <div key={group.source} className="rounded-lg border bg-card/50 overflow-hidden">
+                      <div className="flex items-center justify-between gap-3 bg-primary/5 px-4 py-3">
+                        <h3 className="font-bold text-sm">{group.label}</h3>
+                        <div className="text-sm">
+                          المجموع: <span className="font-bold text-primary">{group.total}</span> نقطة
+                        </div>
+                      </div>
+                      <ul className="divide-y">
+                        {group.items.map((item) => (
+                          <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{item.reason || item.source}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(item.created_at).toLocaleDateString("ar-SY")}
+                                {item.academic_year ? ` • ${item.academic_year}` : ""}
+                              </div>
+                            </div>
+                            <div className={`font-bold whitespace-nowrap ${item.points >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              {item.points > 0 ? "+" : ""}{item.points}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
