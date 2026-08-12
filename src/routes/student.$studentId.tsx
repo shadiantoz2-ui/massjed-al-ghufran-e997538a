@@ -194,6 +194,7 @@ function StudentView() {
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
             <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
             <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
+            <TabsTrigger value="points" className="flex-1">سجل النقاط</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recitations" className="pt-4">
