@@ -47,6 +47,24 @@ interface HadithRow {
   recitation_type?: string | null;
 }
 
+interface PointEventRow {
+  id: string;
+  points: number;
+  source: string;
+  reason: string | null;
+  created_at: string;
+  academic_year: number | null;
+  archived: boolean;
+}
+
+const POINT_SOURCE_LABELS: Record<string, string> = {
+  recitation: "التسميعات",
+  probe: "سبر الأجزاء في الأوقاف",
+  hadith: "الأربعين النووية",
+  attendance: "الحضور",
+  manual: "نقاط يدوية",
+};
+
 function StudentView() {
   const { studentId } = Route.useParams();
   const { session } = useAuth();
