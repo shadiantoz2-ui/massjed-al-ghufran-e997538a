@@ -140,6 +140,21 @@ function StudentView() {
     if (rank(next) > rank(cur)) hadithStatus.set(h.hadith_number, next);
   }
 
+  const groupedPoints = new Map<string, PointEventRow[]>();
+  for (const pe of pointEvents) {
+    if (pe.archived) continue;
+    const list = groupedPoints.get(pe.source) ?? [];
+    list.push(pe);
+    groupedPoints.set(pe.source, list);
+  }
+  const groupTotals = Array.from(groupedPoints.entries()).map(([source, items]) => ({
+    source,
+    label: POINT_SOURCE_LABELS[source] ?? source,
+    total: items.reduce((sum, i) => sum + i.points, 0),
+    items,
+  }));
+  const pointsLogTotal = groupTotals.reduce((sum, g) => sum + g.total, 0);
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-10">
