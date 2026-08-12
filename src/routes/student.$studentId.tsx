@@ -73,6 +73,7 @@ function StudentView() {
   const [full, setFull] = useState<any[]>([]);
   const [probes, setProbes] = useState<ProbeRow[]>([]);
   const [hadiths, setHadiths] = useState<HadithRow[]>([]);
+  const [pointEvents, setPointEvents] = useState<PointEventRow[]>([]);
   const [totalPoints, setTotalPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
