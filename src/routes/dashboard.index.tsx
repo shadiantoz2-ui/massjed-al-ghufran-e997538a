@@ -52,9 +52,12 @@ function Home() {
   const [pointsExporting, setPointsExporting] = useState(false);
   const [recCourse, setRecCourse] = useState<string | null>(null);
   const [recExporting, setRecExporting] = useState(false);
+  const [namesCourse, setNamesCourse] = useState<string | null>(null);
+  const [namesExporting, setNamesExporting] = useState(false);
 
 
   const isAdmin = roles.includes("admin");
+  const canExport = roles.includes("admin") || roles.includes("supervisor");
 
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
@@ -76,11 +79,11 @@ function Home() {
           .then(({ count }) => setStudentsCount(count ?? 0)),
         loadCourse(),
       ];
-      if (isAdmin) tasks.push(loadCourses());
+      if (canExport) tasks.push(loadCourses());
       await Promise.all(tasks);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+  }, [canExport]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -227,6 +230,25 @@ function Home() {
     toast.success("تم تحميل الملف");
   }
 
+  async function exportNamesPointsExcel() {
+    if (!namesCourse) return toast.error("اختر دورة");
+    setNamesExporting(true);
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: namesCourse });
+    setNamesExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "اسم الطالب": [r.student_name, r.father_name, r.nickname].filter(Boolean).join(" "),
+      "مجموع النقاط": r.total_points,
+    }));
+    const c = courses.find((x) => x.id === namesCourse);
+    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
+
+
   return (
 
     <div className="space-y-6">
@@ -346,7 +368,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل بيانات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">اختر دورة أو أكثر لتصديرها في ملف واحد.</p>
@@ -374,7 +396,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل نقاط الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط الطلاب فيها.</p>
@@ -402,7 +424,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
@@ -431,6 +453,38 @@ function Home() {
           </Button>
         </Card>
       )}
+
+      {canExport && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل أسماء الطلاب ونقاطهم (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = namesCourse === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setNamesCourse(on ? null : c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportNamesPointsExcel} disabled={namesExporting}>
+            <Download className="size-4" /> {namesExporting ? "جاري التحميل..." : "تحميل الأسماء والنقاط"}
+          </Button>
+        </Card>
+      )}
+
+
 
 
       <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>

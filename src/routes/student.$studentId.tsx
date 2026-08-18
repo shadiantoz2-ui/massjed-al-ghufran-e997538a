@@ -62,7 +62,7 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
   probe: "سبر الأجزاء في الأوقاف",
   hadith: "الأربعين النووية",
   attendance: "الحضور",
-  manual: "نقاط يدوية",
+  manual: "النقاط الإضافية",
 };
 
 function StudentView() {
@@ -147,12 +147,17 @@ function StudentView() {
     list.push(pe);
     groupedPoints.set(pe.source, list);
   }
-  const groupTotals = Array.from(groupedPoints.entries()).map(([source, items]) => ({
-    source,
-    label: POINT_SOURCE_LABELS[source] ?? source,
-    total: items.reduce((sum, i) => sum + i.points, 0),
-    items,
-  }));
+  const orderedSources = ["recitation", "probe", "attendance", "manual", "hadith"];
+  const extraSources = Array.from(groupedPoints.keys()).filter((s) => !orderedSources.includes(s));
+  const groupTotals = [...orderedSources, ...extraSources].map((source) => {
+    const items = groupedPoints.get(source) ?? [];
+    return {
+      source,
+      label: POINT_SOURCE_LABELS[source] ?? source,
+      total: items.reduce((sum, i) => sum + i.points, 0),
+      items,
+    };
+  });
   const pointsLogTotal = groupTotals.reduce((sum, g) => sum + g.total, 0);
 
   return (
@@ -318,18 +323,18 @@ function StudentView() {
                   المجموع النهائي: <span className="font-black text-primary text-lg">{pointsLogTotal}</span> نقطة
                 </div>
               </div>
-              {groupTotals.length === 0 ? (
-                <p className="text-sm text-muted-foreground">لا توجد نقاط مسجَّلة بعد.</p>
-              ) : (
-                <div className="space-y-4">
-                  {groupTotals.map((group) => (
-                    <div key={group.source} className="rounded-lg border bg-card/50 overflow-hidden">
-                      <div className="flex items-center justify-between gap-3 bg-primary/5 px-4 py-3">
-                        <h3 className="font-bold text-sm">{group.label}</h3>
-                        <div className="text-sm">
-                          المجموع: <span className="font-bold text-primary">{group.total}</span> نقطة
-                        </div>
+              <div className="space-y-4">
+                {groupTotals.map((group) => (
+                  <div key={group.source} className="rounded-lg border bg-card/50 overflow-hidden">
+                    <div className="flex items-center justify-between gap-3 bg-primary/5 px-4 py-3">
+                      <h3 className="font-bold text-sm">{group.label}</h3>
+                      <div className="text-sm">
+                        المجموع: <span className="font-bold text-primary">{group.total}</span> نقطة
                       </div>
+                    </div>
+                    {group.items.length === 0 ? (
+                      <p className="px-4 py-3 text-xs text-muted-foreground">لا توجد نقاط في هذه الخانة.</p>
+                    ) : (
                       <ul className="divide-y">
                         {group.items.map((item) => (
                           <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
@@ -346,10 +351,10 @@ function StudentView() {
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    )}
+                  </div>
+                ))}
+              </div>
             </Card>
           </TabsContent>
         </Tabs>
