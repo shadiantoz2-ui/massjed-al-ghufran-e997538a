@@ -62,7 +62,7 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
   probe: "سبر الأجزاء في الأوقاف",
   hadith: "الأربعين النووية",
   attendance: "الحضور",
-  manual: "نقاط يدوية",
+  manual: "النقاط الإضافية",
 };
 
 function StudentView() {
