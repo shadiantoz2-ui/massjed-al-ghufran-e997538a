@@ -230,6 +230,25 @@ function Home() {
     toast.success("تم تحميل الملف");
   }
 
+  async function exportNamesPointsExcel() {
+    if (!namesCourse) return toast.error("اختر دورة");
+    setNamesExporting(true);
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: namesCourse });
+    setNamesExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "اسم الطالب": [r.student_name, r.father_name, r.nickname].filter(Boolean).join(" "),
+      "مجموع النقاط": r.total_points,
+    }));
+    const c = courses.find((x) => x.id === namesCourse);
+    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
+
+
   return (
 
     <div className="space-y-6">
