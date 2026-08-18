@@ -749,37 +749,65 @@ function RecitePage() {
             </Card>
           )}
 
-          <Card className="p-5">
-            <h3 className="font-bold mb-3">سجل النقاط ({pointEvents.length})</h3>
-            {pointEvents.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">لا توجد نقاط بعد.</p>
-            ) : (
-              <ul className="divide-y">
-                {pointEvents.map((e) => (
-                  <li key={e.id} className="py-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="font-semibold flex items-center gap-2 flex-wrap">
-                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold",
-                          e.points >= 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                                        : "bg-red-500/15 text-red-700 dark:text-red-400")}>
-                          {e.points >= 0 ? `+${e.points}` : e.points}
+          {(() => {
+            const order = ["recitation", "probe", "attendance", "manual", "hadith"];
+            const extra = Array.from(new Set(pointEvents.map((e) => e.source))).filter((s) => !order.includes(s));
+            const groups = [...order, ...extra].map((source) => {
+              const items = pointEvents.filter((e) => e.source === source);
+              return { source, items, total: items.reduce((s, i) => s + i.points, 0) };
+            });
+            const grand = groups.reduce((s, g) => s + g.total, 0);
+            return (
+              <Card className="p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-bold">سجل النقاط ({pointEvents.length})</h3>
+                  <div className="text-sm">
+                    المجموع الكلي: <span className="font-black text-primary text-lg">{grand}</span> نقطة
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {groups.map((g) => (
+                    <div key={g.source} className="rounded-lg border overflow-hidden">
+                      <div className="flex items-center justify-between gap-3 bg-primary/5 px-4 py-3">
+                        <span className="font-bold text-sm">{sourceLabel(g.source)}</span>
+                        <span className="text-sm">
+                          المجموع: <span className="font-bold text-primary">{g.total}</span> نقطة
                         </span>
-                        <span className="text-sm">{sourceLabel(e.source)}</span>
-                        {e.archived && <span className="text-[10px] text-muted-foreground">أرشيف</span>}
                       </div>
-                      {e.reason && <div className="text-xs text-muted-foreground mt-1">{e.reason}</div>}
-                      <div className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString("ar-EG")}</div>
+                      {g.items.length === 0 ? (
+                        <p className="px-4 py-3 text-xs text-muted-foreground">لا توجد نقاط في هذه الخانة.</p>
+                      ) : (
+                        <ul className="divide-y">
+                          {g.items.map((e) => (
+                            <li key={e.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="font-semibold flex items-center gap-2 flex-wrap">
+                                  <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold",
+                                    e.points >= 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                                  : "bg-red-500/15 text-red-700 dark:text-red-400")}>
+                                    {e.points >= 0 ? `+${e.points}` : e.points}
+                                  </span>
+                                  {e.archived && <span className="text-[10px] text-muted-foreground">أرشيف</span>}
+                                </div>
+                                {e.reason && <div className="text-xs text-muted-foreground mt-1">{e.reason}</div>}
+                                <div className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString("ar-EG")}</div>
+                              </div>
+                              {canEditAll && (
+                                <Button size="icon" variant="ghost" onClick={() => removePointEvent(e.id)}>
+                                  <Trash2 className="size-4 text-destructive" />
+                                </Button>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    {canEditAll && (
-                      <Button size="icon" variant="ghost" onClick={() => removePointEvent(e.id)}>
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+                  ))}
+                </div>
+              </Card>
+            );
+          })()}
+
         </TabsContent>
 
         {/* ====== Attendance section ====== */}
