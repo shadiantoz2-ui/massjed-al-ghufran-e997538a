@@ -52,9 +52,12 @@ function Home() {
   const [pointsExporting, setPointsExporting] = useState(false);
   const [recCourse, setRecCourse] = useState<string | null>(null);
   const [recExporting, setRecExporting] = useState(false);
+  const [namesCourse, setNamesCourse] = useState<string | null>(null);
+  const [namesExporting, setNamesExporting] = useState(false);
 
 
   const isAdmin = roles.includes("admin");
+  const canExport = roles.includes("admin") || roles.includes("supervisor");
 
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
@@ -76,11 +79,11 @@ function Home() {
           .then(({ count }) => setStudentsCount(count ?? 0)),
         loadCourse(),
       ];
-      if (isAdmin) tasks.push(loadCourses());
+      if (canExport) tasks.push(loadCourses());
       await Promise.all(tasks);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+  }, [canExport]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
