@@ -147,12 +147,17 @@ function StudentView() {
     list.push(pe);
     groupedPoints.set(pe.source, list);
   }
-  const groupTotals = Array.from(groupedPoints.entries()).map(([source, items]) => ({
-    source,
-    label: POINT_SOURCE_LABELS[source] ?? source,
-    total: items.reduce((sum, i) => sum + i.points, 0),
-    items,
-  }));
+  const orderedSources = ["recitation", "probe", "attendance", "manual", "hadith"];
+  const extraSources = Array.from(groupedPoints.keys()).filter((s) => !orderedSources.includes(s));
+  const groupTotals = [...orderedSources, ...extraSources].map((source) => {
+    const items = groupedPoints.get(source) ?? [];
+    return {
+      source,
+      label: POINT_SOURCE_LABELS[source] ?? source,
+      total: items.reduce((sum, i) => sum + i.points, 0),
+      items,
+    };
+  });
   const pointsLogTotal = groupTotals.reduce((sum, g) => sum + g.total, 0);
 
   return (
