@@ -454,6 +454,38 @@ function Home() {
         </Card>
       )}
 
+      {canExport && (
+        <Card className="p-5">
+          <h2 className="mb-1 font-bold">تحميل أسماء الطلاب ونقاطهم (Excel)</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {courses.map((c) => {
+              const on = namesCourse === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setNamesCourse(on ? null : c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+                  )}
+                >
+                  {c.name} — {c.year}
+                </button>
+              );
+            })}
+          </div>
+          <Button className="mt-4" onClick={exportNamesPointsExcel} disabled={namesExporting}>
+            <Download className="size-4" /> {namesExporting ? "جاري التحميل..." : "تحميل الأسماء والنقاط"}
+          </Button>
+        </Card>
+      )}
+
+
+
 
       <Dialog open={!!editCourse} onOpenChange={(o) => !o && setEditCourse(null)}>
         <DialogContent dir="rtl">
