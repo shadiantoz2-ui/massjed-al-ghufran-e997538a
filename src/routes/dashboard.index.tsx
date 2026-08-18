@@ -368,7 +368,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل بيانات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">اختر دورة أو أكثر لتصديرها في ملف واحد.</p>
@@ -396,7 +396,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل نقاط الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط الطلاب فيها.</p>
@@ -424,7 +424,7 @@ function Home() {
         </Card>
       )}
 
-      {isAdmin && (
+      {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
