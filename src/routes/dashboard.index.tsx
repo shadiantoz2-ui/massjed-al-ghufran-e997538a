@@ -240,8 +240,10 @@ function Home() {
     if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
     const mapped = rows.map((r) => ({
       "اسم الطالب": [r.student_name, r.father_name, r.nickname].filter(Boolean).join(" "),
+      "أستاذ الحلقة": r.teacher_name ?? "",
       "مجموع النقاط": r.total_points,
     }));
+
     const c = courses.find((x) => x.id === namesCourse);
     await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
     toast.success("تم تحميل الملف");
