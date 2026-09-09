@@ -166,6 +166,22 @@ function TeachersPage() {
     load();
   }
 
+  async function changeRole(t: TeacherRow, newRole: "supervisor" | "reciter" | "halaqah") {
+    if (t.user_id === user?.id) return toast.error("لا يمكنك تعديل دورك بنفسك");
+    const { error: delErr } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", t.user_id)
+      .in("role", ["supervisor", "reciter", "halaqah"] as any);
+    if (delErr) return toast.error(delErr.message);
+    const { error: insErr } = await supabase
+      .from("user_roles")
+      .insert({ user_id: t.user_id, role: newRole as any });
+    if (insErr) return toast.error(insErr.message);
+    toast.success(`تم تعيين الدور: ${ROLE_LABELS[newRole]}`);
+    load();
+  }
+
   if (!isAdmin) {
     return (
       <Card className="p-6 text-center">

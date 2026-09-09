@@ -48,16 +48,20 @@ function Home() {
 
   const [exportSel, setExportSel] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [pointsCourse, setPointsCourse] = useState<string | null>(null);
+  const [pointsSel, setPointsSel] = useState<string[]>([]);
   const [pointsExporting, setPointsExporting] = useState(false);
-  const [recCourse, setRecCourse] = useState<string | null>(null);
+  const [recSel, setRecSel] = useState<string[]>([]);
   const [recExporting, setRecExporting] = useState(false);
-  const [namesCourse, setNamesCourse] = useState<string | null>(null);
+  const [namesSel, setNamesSel] = useState<string[]>([]);
   const [namesExporting, setNamesExporting] = useState(false);
-
+  const [myPointsCourse, setMyPointsCourse] = useState<string | null>(null);
+  const [myPointsExporting, setMyPointsExporting] = useState(false);
+  const [myRecCourse, setMyRecCourse] = useState<string | null>(null);
+  const [myRecExporting, setMyRecExporting] = useState(false);
 
   const isAdmin = roles.includes("admin");
   const canExport = roles.includes("admin") || roles.includes("supervisor");
+  const isHalaqah = roles.includes("halaqah");
 
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
@@ -79,11 +83,11 @@ function Home() {
           .then(({ count }) => setStudentsCount(count ?? 0)),
         loadCourse(),
       ];
-      if (canExport) tasks.push(loadCourses());
+      if (canExport || isHalaqah) tasks.push(loadCourses());
       await Promise.all(tasks);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canExport]);
+  }, [canExport, isHalaqah]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -170,10 +174,15 @@ function Home() {
     toast.success("تم تحميل الملف");
   }
 
+  function suffix(ids: string[]) {
+    const names = courses.filter((c) => ids.includes(c.id)).map((c) => `${c.name}-${c.year}`);
+    return names.length ? names.join("_") : "";
+  }
+
   async function exportPointsExcel() {
-    if (!pointsCourse) return toast.error("اختر دورة");
+    if (pointsSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setPointsExporting(true);
-    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: pointsCourse });
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_ids: pointsSel });
     setPointsExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -194,15 +203,14 @@ function Home() {
       "نقاط إضافية/خصم": r.manual_points,
       "مجموع النقاط": r.total_points,
     }));
-    const c = courses.find((x) => x.id === pointsCourse);
-    await downloadRtlXlsx(mapped, "نقاط الطلاب", `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "نقاط الطلاب", `نقاط-الطلاب-${suffix(pointsSel)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
   async function exportRecitationsExcel() {
-    if (!recCourse) return toast.error("اختر دورة");
+    if (recSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setRecExporting(true);
-    const { data, error } = await supabase.rpc("export_recitations_data" as any, { _course_id: recCourse });
+    const { data, error } = await supabase.rpc("export_recitations_data" as any, { _course_ids: recSel });
     setRecExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -225,15 +233,14 @@ function Home() {
       "أرقام الأحاديث": r.hadiths_list ?? "",
       "مجموع النقاط": r.total_points,
     }));
-    const c = courses.find((x) => x.id === recCourse);
-    await downloadRtlXlsx(mapped, "تسميعات الطلاب", `تسميعات-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "تسميعات الطلاب", `تسميعات-الطلاب-${suffix(recSel)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
   async function exportNamesPointsExcel() {
-    if (!namesCourse) return toast.error("اختر دورة");
+    if (namesSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setNamesExporting(true);
-    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: namesCourse });
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_ids: namesSel });
     setNamesExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -243,9 +250,65 @@ function Home() {
       "أستاذ الحلقة": r.teacher_name ?? "",
       "مجموع النقاط": r.total_points,
     }));
+    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${suffix(namesSel)}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
 
-    const c = courses.find((x) => x.id === namesCourse);
-    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+  async function exportMyPoints() {
+    if (!myPointsCourse) return toast.error("اختر دورة");
+    setMyPointsExporting(true);
+    const { data, error } = await supabase.rpc("export_my_students_points" as any, { _course_id: myPointsCourse });
+    setMyPointsExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "نقاط الصفحات": r.pages_points,
+      "نقاط السور": r.surahs_points,
+      "نقاط سبر الأجزاء": r.probes_points,
+      "نقاط الأحاديث": r.hadiths_points,
+      "نقاط الحضور": r.attendance_points,
+      "نقاط إضافية/خصم": r.manual_points,
+      "مجموع النقاط": r.total_points,
+    }));
+    await downloadRtlXlsx(mapped, "نقاط طلابي", `نقاط-طلابي-${suffix(myPointsCourse ? [myPointsCourse] : [])}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
+  async function exportMyRecitations() {
+    if (!myRecCourse) return toast.error("اختر دورة");
+    setMyRecExporting(true);
+    const { data, error } = await supabase.rpc("export_my_students_recitations" as any, { _course_id: myRecCourse });
+    setMyRecExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "عدد الصفحات": r.pages_count,
+      "أرقام الصفحات": r.pages_list ?? "",
+      "عدد السور": r.surahs_count,
+      "أرقام السور": r.surahs_list ?? "",
+      "عدد سبر الأجزاء": r.probes_count,
+      "أرقام الأجزاء": r.probes_list ?? "",
+      "عدد الأحاديث": r.hadiths_count,
+      "أرقام الأحاديث": r.hadiths_list ?? "",
+      "مجموع النقاط": r.total_points,
+    }));
+    await downloadRtlXlsx(mapped, "تسميعات طلابي", `تسميعات-طلابي-${suffix(myRecCourse ? [myRecCourse] : [])}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
@@ -401,25 +464,8 @@ function Home() {
       {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل نقاط الطلاب (Excel)</h2>
-          <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط الطلاب فيها.</p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = pointsCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setPointsCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <p className="mb-3 text-sm text-muted-foreground">اختر دورة أو أكثر لتصدير نقاط الطلاب في ملف واحد.</p>
+          <CourseChips courses={courses} selected={pointsSel} onToggle={(id) => setPointsSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportPointsExcel} disabled={pointsExporting}>
             <Download className="size-4" /> {pointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
           </Button>
@@ -430,26 +476,9 @@ function Home() {
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            اختر الدورة لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
+            اختر دورة أو أكثر لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = recCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setRecCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <CourseChips courses={courses} selected={recSel} onToggle={(id) => setRecSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportRecitationsExcel} disabled={recExporting}>
             <Download className="size-4" /> {recExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
           </Button>
@@ -460,30 +489,43 @@ function Home() {
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل أسماء الطلاب ونقاطهم (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي.
+            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي. يمكن اختيار أكثر من دورة.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = namesCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setNamesCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <CourseChips courses={courses} selected={namesSel} onToggle={(id) => setNamesSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportNamesPointsExcel} disabled={namesExporting}>
             <Download className="size-4" /> {namesExporting ? "جاري التحميل..." : "تحميل الأسماء والنقاط"}
           </Button>
         </Card>
+      )}
+
+      {isHalaqah && !canExport && (
+        <>
+          <Card className="p-5">
+            <h2 className="mb-1 font-bold">تحميل نقاط طلابي مفصّلة (Excel)</h2>
+            <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط طلاب حلقتك فقط.</p>
+            <CourseChips
+              courses={courses}
+              selected={myPointsCourse ? [myPointsCourse] : []}
+              onToggle={(id) => setMyPointsCourse((p) => (p === id ? null : id))}
+            />
+            <Button className="mt-4" onClick={exportMyPoints} disabled={myPointsExporting}>
+              <Download className="size-4" /> {myPointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
+            </Button>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="mb-1 font-bold">تحميل تسميعات طلابي (Excel)</h2>
+            <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير تسميعات طلاب حلقتك فقط.</p>
+            <CourseChips
+              courses={courses}
+              selected={myRecCourse ? [myRecCourse] : []}
+              onToggle={(id) => setMyRecCourse((p) => (p === id ? null : id))}
+            />
+            <Button className="mt-4" onClick={exportMyRecitations} disabled={myRecExporting}>
+              <Download className="size-4" /> {myRecExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
+            </Button>
+          </Card>
+        </>
       )}
 
 
@@ -508,6 +550,34 @@ function Home() {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function CourseChips({
+  courses, selected, onToggle,
+}: { courses: CourseRow[]; selected: string[]; onToggle: (id: string) => void }) {
+  if (courses.length === 0) {
+    return <p className="text-sm text-muted-foreground">لا توجد دورات متاحة.</p>;
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {courses.map((c) => {
+        const on = selected.includes(c.id);
+        return (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onToggle(c.id)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+              on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+            )}
+          >
+            {c.name} — {c.year}
+          </button>
+        );
+      })}
     </div>
   );
 }
