@@ -464,25 +464,8 @@ function Home() {
       {canExport && (
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل نقاط الطلاب (Excel)</h2>
-          <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط الطلاب فيها.</p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = pointsCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setPointsCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <p className="mb-3 text-sm text-muted-foreground">اختر دورة أو أكثر لتصدير نقاط الطلاب في ملف واحد.</p>
+          <CourseChips courses={courses} selected={pointsSel} onToggle={(id) => setPointsSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportPointsExcel} disabled={pointsExporting}>
             <Download className="size-4" /> {pointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
           </Button>
@@ -493,26 +476,9 @@ function Home() {
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل تسميعات الطلاب (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            اختر الدورة لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
+            اختر دورة أو أكثر لتصدير تسميعات كل طالب (الصفحات، السور، سبر الأجزاء، الأحاديث) كل طالب في سطر خاص.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = recCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setRecCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <CourseChips courses={courses} selected={recSel} onToggle={(id) => setRecSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportRecitationsExcel} disabled={recExporting}>
             <Download className="size-4" /> {recExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
           </Button>
@@ -523,30 +489,43 @@ function Home() {
         <Card className="p-5">
           <h2 className="mb-1 font-bold">تحميل أسماء الطلاب ونقاطهم (Excel)</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي.
+            ملف بخانتين فقط: الاسم الثلاثي (الاسم + اسم الأب + الكنية) ومجموع النقاط الكلي. يمكن اختيار أكثر من دورة.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {courses.map((c) => {
-              const on = namesCourse === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setNamesCourse(on ? null : c.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
-                  )}
-                >
-                  {c.name} — {c.year}
-                </button>
-              );
-            })}
-          </div>
+          <CourseChips courses={courses} selected={namesSel} onToggle={(id) => setNamesSel((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])} />
           <Button className="mt-4" onClick={exportNamesPointsExcel} disabled={namesExporting}>
             <Download className="size-4" /> {namesExporting ? "جاري التحميل..." : "تحميل الأسماء والنقاط"}
           </Button>
         </Card>
+      )}
+
+      {isHalaqah && !canExport && (
+        <>
+          <Card className="p-5">
+            <h2 className="mb-1 font-bold">تحميل نقاط طلابي مفصّلة (Excel)</h2>
+            <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير نقاط طلاب حلقتك فقط.</p>
+            <CourseChips
+              courses={courses}
+              selected={myPointsCourse ? [myPointsCourse] : []}
+              onToggle={(id) => setMyPointsCourse((p) => (p === id ? null : id))}
+            />
+            <Button className="mt-4" onClick={exportMyPoints} disabled={myPointsExporting}>
+              <Download className="size-4" /> {myPointsExporting ? "جاري التحميل..." : "تحميل ملف النقاط"}
+            </Button>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="mb-1 font-bold">تحميل تسميعات طلابي (Excel)</h2>
+            <p className="mb-3 text-sm text-muted-foreground">اختر الدورة لتصدير تسميعات طلاب حلقتك فقط.</p>
+            <CourseChips
+              courses={courses}
+              selected={myRecCourse ? [myRecCourse] : []}
+              onToggle={(id) => setMyRecCourse((p) => (p === id ? null : id))}
+            />
+            <Button className="mt-4" onClick={exportMyRecitations} disabled={myRecExporting}>
+              <Download className="size-4" /> {myRecExporting ? "جاري التحميل..." : "تحميل ملف التسميعات"}
+            </Button>
+          </Card>
+        </>
       )}
 
 
