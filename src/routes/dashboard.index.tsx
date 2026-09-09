@@ -554,6 +554,34 @@ function Home() {
   );
 }
 
+function CourseChips({
+  courses, selected, onToggle,
+}: { courses: CourseRow[]; selected: string[]; onToggle: (id: string) => void }) {
+  if (courses.length === 0) {
+    return <p className="text-sm text-muted-foreground">لا توجد دورات متاحة.</p>;
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {courses.map((c) => {
+        const on = selected.includes(c.id);
+        return (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onToggle(c.id)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+              on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent",
+            )}
+          >
+            {c.name} — {c.year}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <Card className="p-4 flex items-center gap-3">
