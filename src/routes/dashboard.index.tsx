@@ -83,11 +83,11 @@ function Home() {
           .then(({ count }) => setStudentsCount(count ?? 0)),
         loadCourse(),
       ];
-      if (canExport) tasks.push(loadCourses());
+      if (canExport || isHalaqah) tasks.push(loadCourses());
       await Promise.all(tasks);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canExport]);
+  }, [canExport, isHalaqah]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
