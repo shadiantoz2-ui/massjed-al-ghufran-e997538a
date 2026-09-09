@@ -48,16 +48,20 @@ function Home() {
 
   const [exportSel, setExportSel] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [pointsCourse, setPointsCourse] = useState<string | null>(null);
+  const [pointsSel, setPointsSel] = useState<string[]>([]);
   const [pointsExporting, setPointsExporting] = useState(false);
-  const [recCourse, setRecCourse] = useState<string | null>(null);
+  const [recSel, setRecSel] = useState<string[]>([]);
   const [recExporting, setRecExporting] = useState(false);
-  const [namesCourse, setNamesCourse] = useState<string | null>(null);
+  const [namesSel, setNamesSel] = useState<string[]>([]);
   const [namesExporting, setNamesExporting] = useState(false);
-
+  const [myPointsCourse, setMyPointsCourse] = useState<string | null>(null);
+  const [myPointsExporting, setMyPointsExporting] = useState(false);
+  const [myRecCourse, setMyRecCourse] = useState<string | null>(null);
+  const [myRecExporting, setMyRecExporting] = useState(false);
 
   const isAdmin = roles.includes("admin");
   const canExport = roles.includes("admin") || roles.includes("supervisor");
+  const isHalaqah = roles.includes("halaqah");
 
   async function loadCourse() {
     const { data } = await supabase.rpc("get_current_course");
