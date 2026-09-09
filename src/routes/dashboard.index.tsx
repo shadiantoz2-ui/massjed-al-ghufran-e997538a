@@ -174,10 +174,15 @@ function Home() {
     toast.success("تم تحميل الملف");
   }
 
+  function suffix(ids: string[]) {
+    const names = courses.filter((c) => ids.includes(c.id)).map((c) => `${c.name}-${c.year}`);
+    return names.length ? names.join("_") : "";
+  }
+
   async function exportPointsExcel() {
-    if (!pointsCourse) return toast.error("اختر دورة");
+    if (pointsSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setPointsExporting(true);
-    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: pointsCourse });
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_ids: pointsSel });
     setPointsExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -198,15 +203,14 @@ function Home() {
       "نقاط إضافية/خصم": r.manual_points,
       "مجموع النقاط": r.total_points,
     }));
-    const c = courses.find((x) => x.id === pointsCourse);
-    await downloadRtlXlsx(mapped, "نقاط الطلاب", `نقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "نقاط الطلاب", `نقاط-الطلاب-${suffix(pointsSel)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
   async function exportRecitationsExcel() {
-    if (!recCourse) return toast.error("اختر دورة");
+    if (recSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setRecExporting(true);
-    const { data, error } = await supabase.rpc("export_recitations_data" as any, { _course_id: recCourse });
+    const { data, error } = await supabase.rpc("export_recitations_data" as any, { _course_ids: recSel });
     setRecExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -229,15 +233,14 @@ function Home() {
       "أرقام الأحاديث": r.hadiths_list ?? "",
       "مجموع النقاط": r.total_points,
     }));
-    const c = courses.find((x) => x.id === recCourse);
-    await downloadRtlXlsx(mapped, "تسميعات الطلاب", `تسميعات-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+    await downloadRtlXlsx(mapped, "تسميعات الطلاب", `تسميعات-الطلاب-${suffix(recSel)}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
   async function exportNamesPointsExcel() {
-    if (!namesCourse) return toast.error("اختر دورة");
+    if (namesSel.length === 0) return toast.error("اختر دورة واحدة على الأقل");
     setNamesExporting(true);
-    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_id: namesCourse });
+    const { data, error } = await supabase.rpc("export_points_data" as any, { _course_ids: namesSel });
     setNamesExporting(false);
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as any[];
@@ -247,9 +250,65 @@ function Home() {
       "أستاذ الحلقة": r.teacher_name ?? "",
       "مجموع النقاط": r.total_points,
     }));
+    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${suffix(namesSel)}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
 
-    const c = courses.find((x) => x.id === namesCourse);
-    await downloadRtlXlsx(mapped, "أسماء ونقاط", `أسماء-ونقاط-الطلاب-${c ? `${c.name}-${c.year}` : ""}.xlsx`);
+  async function exportMyPoints() {
+    if (!myPointsCourse) return toast.error("اختر دورة");
+    setMyPointsExporting(true);
+    const { data, error } = await supabase.rpc("export_my_students_points" as any, { _course_id: myPointsCourse });
+    setMyPointsExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "نقاط الصفحات": r.pages_points,
+      "نقاط السور": r.surahs_points,
+      "نقاط سبر الأجزاء": r.probes_points,
+      "نقاط الأحاديث": r.hadiths_points,
+      "نقاط الحضور": r.attendance_points,
+      "نقاط إضافية/خصم": r.manual_points,
+      "مجموع النقاط": r.total_points,
+    }));
+    await downloadRtlXlsx(mapped, "نقاط طلابي", `نقاط-طلابي-${suffix(myPointsCourse ? [myPointsCourse] : [])}.xlsx`);
+    toast.success("تم تحميل الملف");
+  }
+
+  async function exportMyRecitations() {
+    if (!myRecCourse) return toast.error("اختر دورة");
+    setMyRecExporting(true);
+    const { data, error } = await supabase.rpc("export_my_students_recitations" as any, { _course_id: myRecCourse });
+    setMyRecExporting(false);
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as any[];
+    if (rows.length === 0) return toast.error("لا توجد بيانات للتصدير");
+    const mapped = rows.map((r) => ({
+      "الدورة": r.course_name,
+      "العام": r.course_year,
+      "الاسم": r.student_name,
+      "الكنية": r.nickname ?? "",
+      "اسم الأب": r.father_name ?? "",
+      "المرحلة الدراسية": r.grade_level ?? "",
+      "أستاذ الحلقة": r.teacher_name ?? "",
+      "عدد الصفحات": r.pages_count,
+      "أرقام الصفحات": r.pages_list ?? "",
+      "عدد السور": r.surahs_count,
+      "أرقام السور": r.surahs_list ?? "",
+      "عدد سبر الأجزاء": r.probes_count,
+      "أرقام الأجزاء": r.probes_list ?? "",
+      "عدد الأحاديث": r.hadiths_count,
+      "أرقام الأحاديث": r.hadiths_list ?? "",
+      "مجموع النقاط": r.total_points,
+    }));
+    await downloadRtlXlsx(mapped, "تسميعات طلابي", `تسميعات-طلابي-${suffix(myRecCourse ? [myRecCourse] : [])}.xlsx`);
     toast.success("تم تحميل الملف");
   }
 
