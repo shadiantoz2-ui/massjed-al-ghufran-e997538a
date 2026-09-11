@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowRight, UserPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/auth")({
@@ -68,6 +68,15 @@ function AuthPage() {
           <p className="mt-4 text-center text-xs text-muted-foreground">
             الحسابات وكلمات المرور تُدار من قبل مدير النظام فقط.
           </p>
+          <div className="mt-5 border-t pt-4">
+            <p className="mb-2 text-center text-xs text-muted-foreground">للطلاب الجدد:</p>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/register">
+                <UserPlus className="size-4" />
+                تسجيل الطلاب في مسجد الغفران
+              </Link>
+            </Button>
+          </div>
         </Card>
       </div>
     </div>

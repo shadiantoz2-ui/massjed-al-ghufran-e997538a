@@ -392,6 +392,69 @@ export type Database = {
           },
         ]
       }
+      student_registrations: {
+        Row: {
+          address: string | null
+          birth_year: number | null
+          contact_phone: string | null
+          created_at: string
+          father_job: string | null
+          father_name: string | null
+          father_phone: string | null
+          full_name: string
+          grade_level: string | null
+          id: string
+          mother_name: string | null
+          mother_phone: string | null
+          nickname: string | null
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          birth_year?: number | null
+          contact_phone?: string | null
+          created_at?: string
+          father_job?: string | null
+          father_name?: string | null
+          father_phone?: string | null
+          full_name: string
+          grade_level?: string | null
+          id?: string
+          mother_name?: string | null
+          mother_phone?: string | null
+          nickname?: string | null
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          birth_year?: number | null
+          contact_phone?: string | null
+          created_at?: string
+          father_job?: string | null
+          father_name?: string | null
+          father_phone?: string | null
+          full_name?: string
+          grade_level?: string | null
+          id?: string
+          mother_name?: string | null
+          mother_phone?: string | null
+          nickname?: string | null
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           address: string | null
@@ -472,6 +535,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_student_registration: {
+        Args: { _id: string; _teacher_id?: string }
+        Returns: string
+      }
       delete_course: { Args: { _course_id: string }; Returns: undefined }
       export_courses_data: {
         Args: { _course_ids: string[] }
@@ -750,6 +817,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      reject_student_registration: { Args: { _id: string }; Returns: undefined }
       search_students_by_name: {
         Args: { _query: string }
         Returns: {
