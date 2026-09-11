@@ -133,6 +133,13 @@ function Index() {
           )}
         </Card>
 
+        <div className="mt-6 rounded-lg border border-primary/30 bg-card p-4 text-center">
+          <p className="mb-3 text-sm text-muted-foreground">هل ترغب بالانتساب إلى حلقات التحفيظ؟</p>
+          <Button asChild className="w-full sm:w-auto">
+            <Link to="/register">تسجيل الطلاب في مسجد الغفران</Link>
+          </Button>
+        </div>
+
         <div className="mt-8 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
           <p>
             <span className="font-semibold text-foreground">للمعلمين:</span> سجّل دخولك من زر «دخول
