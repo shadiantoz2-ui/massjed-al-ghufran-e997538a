@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Users, GraduationCap, LogOut, Home, CalendarClock } from "lucide-react";
+import { Users, GraduationCap, LogOut, Home, CalendarClock, UserPlus } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/lib/quran-data";
@@ -18,6 +18,7 @@ interface NavLink {
 const links: NavLink[] = [
   { to: "/dashboard", label: "الرئيسية", icon: Home },
   { to: "/dashboard/students", label: "الطلاب", icon: GraduationCap },
+  { to: "/dashboard/registrations", label: "قبول الطلاب المسجلين", icon: UserPlus, adminOnly: true },
   { to: "/dashboard/teachers", label: "المعلمون", icon: Users, adminOnly: true },
 ];
 
