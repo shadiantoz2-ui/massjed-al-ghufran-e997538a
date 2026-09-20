@@ -26,6 +26,10 @@ import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 
 
 export const Route = createFileRoute("/dashboard/recite/$studentId")({
+  // حفظ التبويب المفتوح في الرابط لاستعادته عند الرجوع
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: typeof search.tab === "string" && search.tab ? search.tab : undefined,
+  }),
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
   component: () => (
     <DashboardShell>
@@ -83,6 +87,9 @@ function RecitePage() {
   const { studentId } = Route.useParams();
   const { user, roles } = useAuth();
   const canEditAll = canEditAnyRecitation(roles);
+  const { tab: tabParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const activeTab = tabParam ?? "recitations";
 
   const [name, setName] = useState("");
   const [recs, setRecs] = useState<FullRecitation[]>([]);
@@ -510,7 +517,7 @@ function RecitePage() {
         </div>
       </div>
 
-      <Tabs defaultValue="recitations">
+      <Tabs value={activeTab} onValueChange={(v) => navigate({ search: { tab: v === "recitations" ? undefined : v }, replace: true })}>
         <TabsList className="w-full flex-wrap h-auto">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
           <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
