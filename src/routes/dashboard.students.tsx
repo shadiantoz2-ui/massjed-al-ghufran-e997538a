@@ -18,6 +18,10 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/students")({
+  // حفظ كلمة البحث في الرابط لاستعادتها عند الرجوع
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" && search.q ? search.q : undefined,
+  }),
   head: () => ({ meta: [{ title: "إدارة الطلاب" }] }),
   component: () => (
     <DashboardShell>
@@ -65,7 +69,13 @@ function StudentsPage() {
   const isHalaqahOnly = roles.includes("halaqah") && !roles.includes("admin") && !roles.includes("supervisor");
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
-  const [query, setQuery] = useState("");
+  const { q: urlQuery } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [query, setQuery] = useState(urlQuery ?? "");
+  function setQuerySynced(v: string) {
+    setQuery(v);
+    navigate({ search: { q: v || undefined }, replace: true });
+  }
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState<Omit<Student, "id">>(EMPTY);
@@ -238,7 +248,7 @@ function StudentsPage() {
         )}
       </div>
 
-      <Input placeholder="بحث بالاسم..." value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Input placeholder="بحث بالاسم..." value={query} onChange={(e) => setQuerySynced(e.target.value)} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((s) => (

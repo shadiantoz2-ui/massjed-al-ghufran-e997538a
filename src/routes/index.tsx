@@ -9,6 +9,10 @@ import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/")({
+  // حفظ مكان التصفح في الرابط: نص البحث يبقى محفوظاً عند العودة من صفحة الطالب
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" && search.q.trim() ? search.q : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "منصة مسجد الغفران لتسميعات القرآن" },
@@ -24,7 +28,8 @@ interface StudentResult {
 }
 
 function Index() {
-  const [query, setQuery] = useState("");
+  const { q: urlQuery } = Route.useSearch();
+  const [query, setQuery] = useState(urlQuery ?? "");
   const [results, setResults] = useState<StudentResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -39,11 +44,9 @@ function Index() {
     })();
   }, []);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runSearch(term: string) {
     setSearching(true);
-    const { data, error } = await supabase.rpc("search_students_by_name", { _query: query.trim() });
+    const { data, error } = await supabase.rpc("search_students_by_name", { _query: term });
     setSearching(false);
     if (error) {
       console.error(error);
@@ -51,6 +54,26 @@ function Index() {
     }
     setResults((data as StudentResult[]) ?? []);
     setSearched(true);
+  }
+
+  // عند الرجوع من صفحة الطالب يُستعاد البحث تلقائياً من الرابط
+  useEffect(() => {
+    if (urlQuery) {
+      setQuery(urlQuery);
+      runSearch(urlQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlQuery]);
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const term = query.trim();
+    if (!term) return;
+    if (term === urlQuery) {
+      runSearch(term);
+      return;
+    }
+    await navigate({ search: { q: term }, replace: true });
   }
 
   return (
