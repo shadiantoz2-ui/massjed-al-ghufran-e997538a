@@ -20,11 +20,23 @@ function displayName(s: Student) {
   return [s.full_name, s.father_name, s.nickname].filter(Boolean).join(" ");
 }
 
-export function TeachersStudentsPanel() {
+export function TeachersStudentsPanel({
+  openId,
+  onToggleTeacher,
+}: {
+  openId?: string | null;
+  onToggleTeacher?: (id: string) => void;
+}) {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [internalOpenId, setInternalOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const effectiveOpenId = onToggleTeacher ? (openId ?? null) : internalOpenId;
+  function toggle(id: string) {
+    if (onToggleTeacher) onToggleTeacher(id);
+    else setInternalOpenId((cur) => (cur === id ? null : id));
+  }
 
   useEffect(() => {
     (async () => {
@@ -75,12 +87,12 @@ export function TeachersStudentsPanel() {
       ) : (
         <ul className="divide-y rounded-lg border">
           {groups.map((g) => {
-            const open = openId === g.id;
+            const open = effectiveOpenId === g.id;
             return (
               <li key={g.id}>
                 <button
                   type="button"
-                  onClick={() => setOpenId(open ? null : g.id)}
+                  onClick={() => toggle(g.id)}
                   className={cn(
                     "flex w-full items-center justify-between gap-2 px-4 py-2.5 text-start transition",
                     open ? "bg-accent" : "hover:bg-accent/60",
