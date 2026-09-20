@@ -39,11 +39,9 @@ function Index() {
     })();
   }, []);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runSearch(term: string) {
     setSearching(true);
-    const { data, error } = await supabase.rpc("search_students_by_name", { _query: query.trim() });
+    const { data, error } = await supabase.rpc("search_students_by_name", { _query: term });
     setSearching(false);
     if (error) {
       console.error(error);
@@ -51,6 +49,24 @@ function Index() {
     }
     setResults((data as StudentResult[]) ?? []);
     setSearched(true);
+  }
+
+  // استعادة آخر بحث عند العودة إلى الصفحة (مكان التصفح محفوظ في المتصفح)
+  useEffect(() => {
+    const saved = sessionStorage.getItem("home:q");
+    if (saved) {
+      setQuery(saved);
+      runSearch(saved);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const term = query.trim();
+    if (!term) return;
+    sessionStorage.setItem("home:q", term);
+    runSearch(term);
   }
 
   return (
@@ -96,7 +112,7 @@ function Index() {
               dir="rtl"
               placeholder="اكتب اسم الطالب..."
               value={query}
-              onChange={(e) => { setQuery(e.target.value); setSearched(false); }}
+              onChange={(e) => { setQuery(e.target.value); setSearched(false); if (!e.target.value) sessionStorage.removeItem("home:q"); }}
               className="text-base"
             />
             <Button type="submit" disabled={searching || !query.trim()}>

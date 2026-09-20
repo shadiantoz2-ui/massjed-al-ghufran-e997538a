@@ -66,6 +66,15 @@ function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
   const [query, setQuery] = useState("");
+  useEffect(() => {
+    const saved = sessionStorage.getItem("students:q");
+    if (saved) setQuery(saved);
+  }, []);
+  function setQuerySynced(v: string) {
+    setQuery(v);
+    if (v) sessionStorage.setItem("students:q", v);
+    else sessionStorage.removeItem("students:q");
+  }
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState<Omit<Student, "id">>(EMPTY);
@@ -238,7 +247,7 @@ function StudentsPage() {
         )}
       </div>
 
-      <Input placeholder="بحث بالاسم..." value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Input placeholder="بحث بالاسم..." value={query} onChange={(e) => setQuerySynced(e.target.value)} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((s) => (

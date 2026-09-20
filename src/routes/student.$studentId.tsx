@@ -68,6 +68,16 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 function StudentView() {
   const { studentId } = Route.useParams();
   const { session } = useAuth();
+  const [activeTab, setActiveTab] = useState("recitations");
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`student:tab:${studentId}`);
+    if (saved) setActiveTab(saved);
+  }, [studentId]);
+  function changeTab(v: string) {
+    setActiveTab(v);
+    if (v === "recitations") sessionStorage.removeItem(`student:tab:${studentId}`);
+    else sessionStorage.setItem(`student:tab:${studentId}`, v);
+  }
   const [name, setName] = useState<string>("");
   const [recitations, setRecitations] = useState<RecitationLite[]>([]);
   const [full, setFull] = useState<any[]>([]);
@@ -209,7 +219,7 @@ function StudentView() {
         </Card>
 
 
-        <Tabs defaultValue="recitations" className="mt-6">
+        <Tabs value={activeTab} onValueChange={changeTab} className="mt-6">
           <TabsList className="w-full">
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
             <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>

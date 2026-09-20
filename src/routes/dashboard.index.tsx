@@ -17,6 +17,11 @@ import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
 export const Route = createFileRoute("/dashboard/")({
+  // حفظ مكان التصفح في الرابط: كلمة البحث والمعلم المفتوح في اللوحة
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" && search.q ? search.q : undefined,
+    open: typeof search.open === "string" && search.open ? search.open : undefined,
+  }),
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
   component: DashboardHome,
 });
@@ -31,9 +36,11 @@ function DashboardHome() {
 
 function Home() {
   const { roles, user } = useAuth();
+  const { q: urlQuery, open: urlOpen } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [studentsCount, setStudentsCount] = useState<number | null>(null);
   const [course, setCourse] = useState<{ id: string; name: string; year: number } | null>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(urlQuery ?? "");
   const [results, setResults] = useState<{ id: string; full_name: string }[]>([]);
 
   const [newOpen, setNewOpen] = useState(false);
@@ -89,11 +96,29 @@ function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canExport, isHalaqah]);
 
+  // عند الرجوع من صفحة الطالب يُستعاد البحث تلقائياً من الرابط
+  useEffect(() => {
+    if (urlQuery) {
+      setQuery(urlQuery);
+      supabase.rpc("search_students_by_name", { _query: urlQuery }).then(({ data }) => setResults((data ?? []) as any));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlQuery]);
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
-    const { data } = await supabase.rpc("search_students_by_name", { _query: query.trim() });
-    setResults((data ?? []) as any);
+    const term = query.trim();
+    if (!term) return;
+    if (term === urlQuery) {
+      const { data } = await supabase.rpc("search_students_by_name", { _query: term });
+      setResults((data ?? []) as any);
+      return;
+    }
+    await navigate({ search: { q: term, open: urlOpen }, replace: true });
+  }
+
+  function toggleTeacherPanel(id: string) {
+    navigate({ search: { q: urlQuery, open: urlOpen === id ? undefined : id }, replace: true });
   }
 
   async function startNewCourse(e: React.FormEvent) {
@@ -354,7 +379,9 @@ function Home() {
         )}
       </Card>
 
-      {(roles.includes("admin") || roles.includes("supervisor")) && <TeachersStudentsPanel />}
+      {(roles.includes("admin") || roles.includes("supervisor")) && (
+        <TeachersStudentsPanel openId={urlOpen ?? null} onToggleTeacher={toggleTeacherPanel} />
+      )}
 
       {roles.includes("admin") && (
         <Card className="p-5 border-amber-400/40 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/30">

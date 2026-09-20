@@ -83,6 +83,16 @@ function RecitePage() {
   const { studentId } = Route.useParams();
   const { user, roles } = useAuth();
   const canEditAll = canEditAnyRecitation(roles);
+  const [activeTab, setActiveTab] = useState("recitations");
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`recite:tab:${studentId}`);
+    if (saved) setActiveTab(saved);
+  }, [studentId]);
+  function changeTab(v: string) {
+    setActiveTab(v);
+    if (v === "recitations") sessionStorage.removeItem(`recite:tab:${studentId}`);
+    else sessionStorage.setItem(`recite:tab:${studentId}`, v);
+  }
 
   const [name, setName] = useState("");
   const [recs, setRecs] = useState<FullRecitation[]>([]);
@@ -510,7 +520,7 @@ function RecitePage() {
         </div>
       </div>
 
-      <Tabs defaultValue="recitations">
+      <Tabs value={activeTab} onValueChange={changeTab}>
         <TabsList className="w-full flex-wrap h-auto">
           <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
           <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
