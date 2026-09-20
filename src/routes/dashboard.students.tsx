@@ -18,10 +18,6 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/students")({
-  // حفظ كلمة البحث في الرابط لاستعادتها عند الرجوع
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" && search.q ? search.q : undefined,
-  }),
   head: () => ({ meta: [{ title: "إدارة الطلاب" }] }),
   component: () => (
     <DashboardShell>
@@ -69,12 +65,15 @@ function StudentsPage() {
   const isHalaqahOnly = roles.includes("halaqah") && !roles.includes("admin") && !roles.includes("supervisor");
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<TeacherOpt[]>([]);
-  const { q: urlQuery } = Route.useSearch();
-  const navigate = Route.useNavigate();
-  const [query, setQuery] = useState(urlQuery ?? "");
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const saved = sessionStorage.getItem("students:q");
+    if (saved) setQuery(saved);
+  }, []);
   function setQuerySynced(v: string) {
     setQuery(v);
-    navigate({ search: { q: v || undefined }, replace: true });
+    if (v) sessionStorage.setItem("students:q", v);
+    else sessionStorage.removeItem("students:q");
   }
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);

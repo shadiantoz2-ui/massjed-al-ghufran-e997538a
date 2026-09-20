@@ -9,10 +9,6 @@ import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/")({
-  // حفظ مكان التصفح في الرابط: نص البحث يبقى محفوظاً عند العودة من صفحة الطالب
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" && search.q.trim() ? search.q : undefined,
-  }),
   head: () => ({
     meta: [
       { title: "منصة مسجد الغفران لتسميعات القرآن" },
@@ -28,8 +24,7 @@ interface StudentResult {
 }
 
 function Index() {
-  const { q: urlQuery } = Route.useSearch();
-  const [query, setQuery] = useState(urlQuery ?? "");
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<StudentResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -56,24 +51,22 @@ function Index() {
     setSearched(true);
   }
 
-  // عند الرجوع من صفحة الطالب يُستعاد البحث تلقائياً من الرابط
+  // استعادة آخر بحث عند العودة إلى الصفحة (مكان التصفح محفوظ في المتصفح)
   useEffect(() => {
-    if (urlQuery) {
-      setQuery(urlQuery);
-      runSearch(urlQuery);
+    const saved = sessionStorage.getItem("home:q");
+    if (saved) {
+      setQuery(saved);
+      runSearch(saved);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlQuery]);
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const term = query.trim();
     if (!term) return;
-    if (term === urlQuery) {
-      runSearch(term);
-      return;
-    }
-    await navigate({ search: { q: term }, replace: true });
+    sessionStorage.setItem("home:q", term);
+    runSearch(term);
   }
 
   return (
@@ -119,7 +112,7 @@ function Index() {
               dir="rtl"
               placeholder="اكتب اسم الطالب..."
               value={query}
-              onChange={(e) => { setQuery(e.target.value); setSearched(false); }}
+              onChange={(e) => { setQuery(e.target.value); setSearched(false); if (!e.target.value) sessionStorage.removeItem("home:q"); }}
               className="text-base"
             />
             <Button type="submit" disabled={searching || !query.trim()}>
