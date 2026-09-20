@@ -17,10 +17,6 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/student/$studentId")({
-  // حفظ التبويب المفتوح في الرابط لاستعادته عند الرجوع
-  validateSearch: (search: Record<string, unknown>) => ({
-    tab: typeof search.tab === "string" && search.tab ? search.tab : undefined,
-  }),
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
   component: StudentView,
 });
@@ -72,9 +68,16 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 function StudentView() {
   const { studentId } = Route.useParams();
   const { session } = useAuth();
-  const { tab: tabParam } = Route.useSearch();
-  const navigate = Route.useNavigate();
-  const activeTab = tabParam ?? "recitations";
+  const [activeTab, setActiveTab] = useState("recitations");
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`student:tab:${studentId}`);
+    if (saved) setActiveTab(saved);
+  }, [studentId]);
+  function changeTab(v: string) {
+    setActiveTab(v);
+    if (v === "recitations") sessionStorage.removeItem(`student:tab:${studentId}`);
+    else sessionStorage.setItem(`student:tab:${studentId}`, v);
+  }
   const [name, setName] = useState<string>("");
   const [recitations, setRecitations] = useState<RecitationLite[]>([]);
   const [full, setFull] = useState<any[]>([]);
@@ -216,7 +219,7 @@ function StudentView() {
         </Card>
 
 
-        <Tabs value={activeTab} onValueChange={(v) => navigate({ search: { tab: v === "recitations" ? undefined : v }, replace: true })} className="mt-6">
+        <Tabs value={activeTab} onValueChange={changeTab} className="mt-6">
           <TabsList className="w-full">
             <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
             <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
