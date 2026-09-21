@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -67,6 +67,7 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 
 function StudentView() {
   const { studentId } = Route.useParams();
+  const router = useRouter();
   const { session } = useAuth();
   const [activeTab, setActiveTab] = useState("recitations");
   useEffect(() => {
@@ -174,10 +175,10 @@ function StudentView() {
     <div className="min-h-screen bg-background" dir="rtl">
       <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-10">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 text-sm hover:text-primary">
+          <button type="button" onClick={() => router.history.back()} className="flex items-center gap-2 text-sm hover:text-primary">
             <ArrowRight className="size-4" />
             رجوع
-          </Link>
+          </button>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <BookOpen className="size-5 text-primary" />
@@ -220,11 +221,11 @@ function StudentView() {
 
 
         <Tabs value={activeTab} onValueChange={changeTab} className="mt-6">
-          <TabsList className="w-full">
-            <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-            <TabsTrigger value="probes" className="flex-1">سبر الأجزاء في الأوقاف</TabsTrigger>
-            <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
-            <TabsTrigger value="points" className="flex-1">سجل النقاط</TabsTrigger>
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1">
+            <TabsTrigger value="recitations" className="w-full">التسميعات</TabsTrigger>
+            <TabsTrigger value="probes" className="w-full">سبر الأجزاء في الأوقاف</TabsTrigger>
+            <TabsTrigger value="hadiths" className="w-full">الأربعين النووية</TabsTrigger>
+            <TabsTrigger value="points" className="w-full">سجل النقاط</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recitations" className="pt-4">

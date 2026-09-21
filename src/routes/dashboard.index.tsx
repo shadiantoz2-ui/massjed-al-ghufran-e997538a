@@ -17,11 +17,6 @@ import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
 export const Route = createFileRoute("/dashboard/")({
-  // حفظ مكان التصفح في الرابط: كلمة البحث والمعلم المفتوح في اللوحة
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" && search.q ? search.q : undefined,
-    open: typeof search.open === "string" && search.open ? search.open : undefined,
-  }),
   head: () => ({ meta: [{ title: "لوحة التحكم" }] }),
   component: DashboardHome,
 });
@@ -36,12 +31,11 @@ function DashboardHome() {
 
 function Home() {
   const { roles, user } = useAuth();
-  const { q: urlQuery, open: urlOpen } = Route.useSearch();
-  const navigate = Route.useNavigate();
   const [studentsCount, setStudentsCount] = useState<number | null>(null);
   const [course, setCourse] = useState<{ id: string; name: string; year: number } | null>(null);
-  const [query, setQuery] = useState(urlQuery ?? "");
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; full_name: string }[]>([]);
+  const [openTeacherId, setOpenTeacherId] = useState<string | null>(null);
 
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -96,29 +90,32 @@ function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canExport, isHalaqah]);
 
-  // عند الرجوع من صفحة الطالب يُستعاد البحث تلقائياً من الرابط
+  // استعادة البحث والمعلم المفتوح عند الرجوع من صفحة الطالب
   useEffect(() => {
-    if (urlQuery) {
-      setQuery(urlQuery);
-      supabase.rpc("search_students_by_name", { _query: urlQuery }).then(({ data }) => setResults((data ?? []) as any));
+    const savedQuery = sessionStorage.getItem("dashboard:q");
+    const savedTeacher = sessionStorage.getItem("dashboard:open-teacher");
+    if (savedQuery) {
+      setQuery(savedQuery);
+      supabase.rpc("search_students_by_name", { _query: savedQuery }).then(({ data }) => setResults((data ?? []) as any));
     }
+    if (savedTeacher) setOpenTeacherId(savedTeacher);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlQuery]);
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const term = query.trim();
     if (!term) return;
-    if (term === urlQuery) {
-      const { data } = await supabase.rpc("search_students_by_name", { _query: term });
-      setResults((data ?? []) as any);
-      return;
-    }
-    await navigate({ search: { q: term, open: urlOpen }, replace: true });
+    sessionStorage.setItem("dashboard:q", term);
+    const { data } = await supabase.rpc("search_students_by_name", { _query: term });
+    setResults((data ?? []) as any);
   }
 
   function toggleTeacherPanel(id: string) {
-    navigate({ search: { q: urlQuery, open: urlOpen === id ? undefined : id }, replace: true });
+    const next = openTeacherId === id ? null : id;
+    setOpenTeacherId(next);
+    if (next) sessionStorage.setItem("dashboard:open-teacher", next);
+    else sessionStorage.removeItem("dashboard:open-teacher");
   }
 
   async function startNewCourse(e: React.FormEvent) {
@@ -360,7 +357,17 @@ function Home() {
       <Card className="p-5">
         <h2 className="mb-3 font-bold">تسجيل تسميع لطالب</h2>
         <form onSubmit={handleSearch} className="flex gap-2">
-          <Input placeholder="ابحث باسم الطالب..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <Input
+            placeholder="ابحث باسم الطالب..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (!e.target.value) {
+                sessionStorage.removeItem("dashboard:q");
+                setResults([]);
+              }
+            }}
+          />
           <Button type="submit"><Search className="size-4" /> بحث</Button>
         </form>
         {results.length > 0 && (
@@ -380,7 +387,7 @@ function Home() {
       </Card>
 
       {(roles.includes("admin") || roles.includes("supervisor")) && (
-        <TeachersStudentsPanel openId={urlOpen ?? null} onToggleTeacher={toggleTeacherPanel} />
+        <TeachersStudentsPanel openId={openTeacherId} onToggleTeacher={toggleTeacherPanel} />
       )}
 
       {roles.includes("admin") && (
