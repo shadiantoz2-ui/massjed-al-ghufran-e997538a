@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +81,7 @@ interface FullHadith {
 
 function RecitePage() {
   const { studentId } = Route.useParams();
+  const router = useRouter();
   const { user, roles } = useAuth();
   const canEditAll = canEditAnyRecitation(roles);
   const [activeTab, setActiveTab] = useState("recitations");
@@ -507,7 +508,7 @@ function RecitePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm"><Link to="/dashboard/students"><ArrowRight className="size-4" /> الطلاب</Link></Button>
+          <Button variant="ghost" size="sm" onClick={() => router.history.back()}><ArrowRight className="size-4" /> رجوع</Button>
           <h1 className="text-xl font-bold">{name}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -521,16 +522,16 @@ function RecitePage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="w-full flex-wrap h-auto">
-          <TabsTrigger value="recitations" className="flex-1">التسميعات</TabsTrigger>
-          <TabsTrigger value="probes" className="flex-1">سبر الأجزاء</TabsTrigger>
-          <TabsTrigger value="hadiths" className="flex-1">الأربعين النووية</TabsTrigger>
-          <TabsTrigger value="points" className="flex-1">النقاط</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:flex">
+          <TabsTrigger value="recitations" className="w-full sm:flex-1">التسميعات</TabsTrigger>
+          <TabsTrigger value="probes" className="w-full sm:flex-1">سبر الأجزاء</TabsTrigger>
+          <TabsTrigger value="hadiths" className="w-full sm:flex-1">الأربعين النووية</TabsTrigger>
+          <TabsTrigger value="points" className="w-full sm:flex-1">النقاط</TabsTrigger>
           {(canManageAttendance || isHalaqahTeacher) && (
-            <TabsTrigger value="attendance" className="flex-1">الحضور</TabsTrigger>
+            <TabsTrigger value="attendance" className="w-full sm:flex-1">الحضور</TabsTrigger>
           )}
           {canEditAll && (
-            <TabsTrigger value="achievements" className="flex-1">الإنجازات</TabsTrigger>
+            <TabsTrigger value="achievements" className="w-full sm:flex-1">الإنجازات</TabsTrigger>
           )}
         </TabsList>
         {canEditAll && <AchievementsPanel studentId={studentId} />}
