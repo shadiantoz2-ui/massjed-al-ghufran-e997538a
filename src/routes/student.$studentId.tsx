@@ -131,11 +131,82 @@ function StudentView() {
     setInfoLoading(true);
     const { data } = await supabase
       .from("students")
-      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year")
+      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year, contact_phone, father_phone, mother_phone, address, father_job")
       .eq("id", studentId)
       .maybeSingle();
     setInfo((data as StudentInfo) ?? null);
     setInfoLoading(false);
+  }
+
+  function startEdit() {
+    if (!info) return;
+    setEditForm({
+      full_name: info.full_name,
+      nickname: info.nickname ?? "",
+      father_name: info.father_name ?? "",
+      mother_name: info.mother_name ?? "",
+      grade_level: info.grade_level ?? "",
+      birth_year: info.birth_year != null ? String(info.birth_year) : "",
+      contact_phone: info.contact_phone ?? "",
+      father_phone: info.father_phone ?? "",
+      mother_phone: info.mother_phone ?? "",
+      address: info.address ?? "",
+      father_job: info.father_job ?? "",
+    });
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    if (!editForm.full_name.trim()) {
+      toast.error("اسم الطالب مطلوب");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("students")
+      .update({
+        full_name: editForm.full_name.trim(),
+        nickname: editForm.nickname.trim() || null,
+        father_name: editForm.father_name.trim() || null,
+        mother_name: editForm.mother_name.trim() || null,
+        grade_level: editForm.grade_level.trim() || null,
+        birth_year: editForm.birth_year ? Number(editForm.birth_year) : null,
+        contact_phone: editForm.contact_phone.trim() || null,
+        father_phone: editForm.father_phone.trim() || null,
+        mother_phone: editForm.mother_phone.trim() || null,
+        address: editForm.address.trim() || null,
+        father_job: editForm.father_job.trim() || null,
+      })
+      .eq("id", studentId);
+    setSaving(false);
+    if (error) {
+      toast.error("تعذر حفظ التعديلات");
+      return;
+    }
+    toast.success("تم حفظ التعديلات");
+    setEditOpen(false);
+    setInfo(null);
+    setInfoLoading(true);
+    const { data } = await supabase
+      .from("students")
+      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year, contact_phone, father_phone, mother_phone, address, father_job")
+      .eq("id", studentId)
+      .maybeSingle();
+    setInfo((data as StudentInfo) ?? null);
+    setInfoLoading(false);
+    setName(editForm.full_name.trim());
+  }
+
+  async function confirmDelete() {
+    setDeleting(true);
+    const { error } = await supabase.from("students").delete().eq("id", studentId);
+    setDeleting(false);
+    if (error) {
+      toast.error("تعذر حذف الطالب");
+      return;
+    }
+    toast.success("تم حذف الطالب");
+    router.navigate({ to: "/" });
   }
 
   if (loading) return <div className="p-10 text-center" dir="rtl">جاري التحميل...</div>;
