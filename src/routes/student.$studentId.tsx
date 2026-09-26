@@ -3,18 +3,25 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowRight, BookOpen, Info } from "lucide-react";
+import { ArrowRight, BookOpen, Info, Pencil, Trash2 } from "lucide-react";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS } from "@/lib/quran-data";
 import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, canManageStudents } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/student/$studentId")({
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
@@ -28,6 +35,11 @@ interface StudentInfo {
   mother_name: string | null;
   grade_level: string | null;
   birth_year: number | null;
+  contact_phone: string | null;
+  father_phone: string | null;
+  mother_phone: string | null;
+  address: string | null;
+  father_job: string | null;
 }
 
 interface ProbeRow extends ProbeLite {
@@ -68,7 +80,17 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 function StudentView() {
   const { studentId } = Route.useParams();
   const router = useRouter();
-  const { session } = useAuth();
+  const { session, roles } = useAuth();
+  const canManage = canManageStudents(roles);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: "", nickname: "", father_name: "", mother_name: "",
+    grade_level: "", birth_year: "", contact_phone: "", father_phone: "",
+    mother_phone: "", address: "", father_job: "",
+  });
   const [activeTab, setActiveTab] = useState("recitations");
   useEffect(() => {
     const saved = sessionStorage.getItem(`student:tab:${studentId}`);
@@ -119,11 +141,82 @@ function StudentView() {
     setInfoLoading(true);
     const { data } = await supabase
       .from("students")
-      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year")
+      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year, contact_phone, father_phone, mother_phone, address, father_job")
       .eq("id", studentId)
       .maybeSingle();
     setInfo((data as StudentInfo) ?? null);
     setInfoLoading(false);
+  }
+
+  function startEdit() {
+    if (!info) return;
+    setEditForm({
+      full_name: info.full_name,
+      nickname: info.nickname ?? "",
+      father_name: info.father_name ?? "",
+      mother_name: info.mother_name ?? "",
+      grade_level: info.grade_level ?? "",
+      birth_year: info.birth_year != null ? String(info.birth_year) : "",
+      contact_phone: info.contact_phone ?? "",
+      father_phone: info.father_phone ?? "",
+      mother_phone: info.mother_phone ?? "",
+      address: info.address ?? "",
+      father_job: info.father_job ?? "",
+    });
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    if (!editForm.full_name.trim()) {
+      toast.error("اسم الطالب مطلوب");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("students")
+      .update({
+        full_name: editForm.full_name.trim(),
+        nickname: editForm.nickname.trim() || null,
+        father_name: editForm.father_name.trim() || null,
+        mother_name: editForm.mother_name.trim() || null,
+        grade_level: editForm.grade_level.trim() || null,
+        birth_year: editForm.birth_year ? Number(editForm.birth_year) : null,
+        contact_phone: editForm.contact_phone.trim() || null,
+        father_phone: editForm.father_phone.trim() || null,
+        mother_phone: editForm.mother_phone.trim() || null,
+        address: editForm.address.trim() || null,
+        father_job: editForm.father_job.trim() || null,
+      })
+      .eq("id", studentId);
+    setSaving(false);
+    if (error) {
+      toast.error("تعذر حفظ التعديلات");
+      return;
+    }
+    toast.success("تم حفظ التعديلات");
+    setEditOpen(false);
+    setInfo(null);
+    setInfoLoading(true);
+    const { data } = await supabase
+      .from("students")
+      .select("full_name, nickname, father_name, mother_name, grade_level, birth_year, contact_phone, father_phone, mother_phone, address, father_job")
+      .eq("id", studentId)
+      .maybeSingle();
+    setInfo((data as StudentInfo) ?? null);
+    setInfoLoading(false);
+    setName(editForm.full_name.trim());
+  }
+
+  async function confirmDelete() {
+    setDeleting(true);
+    const { error } = await supabase.from("students").delete().eq("id", studentId);
+    setDeleting(false);
+    if (error) {
+      toast.error("تعذر حذف الطالب");
+      return;
+    }
+    toast.success("تم حذف الطالب");
+    router.navigate({ to: "/" });
   }
 
   if (loading) return <div className="p-10 text-center" dir="rtl">جاري التحميل...</div>;
@@ -387,11 +480,75 @@ function StudentView() {
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
                 <InfoRow label="عام الميلاد" value={info.birth_year != null ? String(info.birth_year) : null} />
+                <InfoRow label="رقم التواصل" value={info.contact_phone} />
+                <InfoRow label="رقم الأب" value={info.father_phone} />
+                <InfoRow label="رقم الأم" value={info.mother_phone} />
+                <InfoRow label="عنوان السكن" value={info.address} />
+                <InfoRow label="عمل الأب" value={info.father_job} />
               </dl>
+              {canManage && (
+                <div className="mt-4 flex gap-2 border-t pt-3">
+                  <Button size="sm" variant="outline" onClick={startEdit}>
+                    <Pencil className="size-4" /> تعديل المعلومات
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                    <Trash2 className="size-4" /> حذف الطالب
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>تعديل معلومات الطالب</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <EditField label="اسم الطالب" value={editForm.full_name} onChange={(v) => setEditForm((f) => ({ ...f, full_name: v }))} />
+            <EditField label="كنية الطالب" value={editForm.nickname} onChange={(v) => setEditForm((f) => ({ ...f, nickname: v }))} />
+            <EditField label="اسم الأب" value={editForm.father_name} onChange={(v) => setEditForm((f) => ({ ...f, father_name: v }))} />
+            <EditField label="اسم الأم" value={editForm.mother_name} onChange={(v) => setEditForm((f) => ({ ...f, mother_name: v }))} />
+            <EditField label="المرحلة الدراسية" value={editForm.grade_level} onChange={(v) => setEditForm((f) => ({ ...f, grade_level: v }))} />
+            <EditField label="عام الميلاد" value={editForm.birth_year} onChange={(v) => setEditForm((f) => ({ ...f, birth_year: v.replace(/[^0-9]/g, "") }))} />
+            <EditField label="رقم التواصل" value={editForm.contact_phone} onChange={(v) => setEditForm((f) => ({ ...f, contact_phone: v }))} />
+            <EditField label="رقم الأب" value={editForm.father_phone} onChange={(v) => setEditForm((f) => ({ ...f, father_phone: v }))} />
+            <EditField label="رقم الأم" value={editForm.mother_phone} onChange={(v) => setEditForm((f) => ({ ...f, mother_phone: v }))} />
+            <EditField label="عنوان السكن" value={editForm.address} onChange={(v) => setEditForm((f) => ({ ...f, address: v }))} />
+            <EditField label="عمل الأب" value={editForm.father_job} onChange={(v) => setEditForm((f) => ({ ...f, father_job: v }))} />
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>إلغاء</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? "جاري الحفظ..." : "حفظ"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الطالب</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الطالب «{info?.full_name}» وجميع تسميعاته ونقاطه نهائياً. هل أنت متأكد؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "جاري الحذف..." : "حذف نهائي"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
