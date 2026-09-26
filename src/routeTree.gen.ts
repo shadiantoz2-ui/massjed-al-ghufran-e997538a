@@ -18,6 +18,7 @@ import { Route as StudentStudentIdRouteImport } from './routes/student.$studentI
 import { Route as DashboardTeachersRouteImport } from './routes/dashboard.teachers'
 import { Route as DashboardStudentsRouteImport } from './routes/dashboard.students'
 import { Route as DashboardRegistrationsRouteImport } from './routes/dashboard.registrations'
+import { Route as DashboardAttendanceRouteImport } from './routes/dashboard.attendance'
 import { Route as DashboardReciteStudentIdRouteImport } from './routes/dashboard.recite.$studentId'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -65,6 +66,11 @@ const DashboardRegistrationsRoute = DashboardRegistrationsRouteImport.update({
   path: '/registrations',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAttendanceRoute = DashboardAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardReciteStudentIdRoute =
   DashboardReciteStudentIdRouteImport.update({
     id: '/recite/$studentId',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/register': typeof RegisterRoute
+  '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
   '/dashboard/teachers': typeof DashboardTeachersRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/register': typeof RegisterRoute
+  '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
   '/dashboard/teachers': typeof DashboardTeachersRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/register': typeof RegisterRoute
+  '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
   '/dashboard/teachers': typeof DashboardTeachersRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/register'
+    | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
     | '/dashboard/teachers'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/register'
+    | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
     | '/dashboard/teachers'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/register'
+    | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
     | '/dashboard/teachers'
@@ -219,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRegistrationsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/attendance': {
+      id: '/dashboard/attendance'
+      path: '/attendance'
+      fullPath: '/dashboard/attendance'
+      preLoaderRoute: typeof DashboardAttendanceRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/recite/$studentId': {
       id: '/dashboard/recite/$studentId'
       path: '/recite/$studentId'
@@ -230,6 +249,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardAttendanceRoute: typeof DashboardAttendanceRoute
   DashboardRegistrationsRoute: typeof DashboardRegistrationsRoute
   DashboardStudentsRoute: typeof DashboardStudentsRoute
   DashboardTeachersRoute: typeof DashboardTeachersRoute
@@ -238,6 +258,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAttendanceRoute: DashboardAttendanceRoute,
   DashboardRegistrationsRoute: DashboardRegistrationsRoute,
   DashboardStudentsRoute: DashboardStudentsRoute,
   DashboardTeachersRoute: DashboardTeachersRoute,

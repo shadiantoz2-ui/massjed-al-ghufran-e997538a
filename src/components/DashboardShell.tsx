@@ -18,6 +18,7 @@ interface NavLink {
 const links: NavLink[] = [
   { to: "/dashboard", label: "الرئيسية", icon: Home },
   { to: "/dashboard/students", label: "الطلاب", icon: GraduationCap },
+  { to: "/dashboard/attendance", label: "الحضور اليومي", icon: CalendarClock },
   { to: "/dashboard/registrations", label: "قبول الطلاب المسجلين", icon: UserPlus, adminOnly: true },
   { to: "/dashboard/teachers", label: "المعلمون", icon: Users, adminOnly: true },
 ];
