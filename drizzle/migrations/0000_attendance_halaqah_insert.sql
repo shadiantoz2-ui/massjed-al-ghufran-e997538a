@@ -1,0 +1,1 @@
+CREATE POLICY att_insert_halaqah ON public.attendance FOR INSERT TO authenticated WITH CHECK (public.is_halaqah_teacher_of(auth.uid(), student_id));
