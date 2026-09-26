@@ -1,0 +1,5 @@
+ALTER TABLE public.recitations DROP CONSTRAINT recitations_student_id_fkey, ADD CONSTRAINT recitations_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+ALTER TABLE public.probes DROP CONSTRAINT probes_student_id_fkey, ADD CONSTRAINT probes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+ALTER TABLE public.hadith_recitations DROP CONSTRAINT hadith_recitations_student_id_fkey, ADD CONSTRAINT hadith_recitations_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+ALTER TABLE public.attendance DROP CONSTRAINT attendance_student_id_fkey, ADD CONSTRAINT attendance_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+ALTER TABLE public.point_events DROP CONSTRAINT point_events_student_id_fkey, ADD CONSTRAINT point_events_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
