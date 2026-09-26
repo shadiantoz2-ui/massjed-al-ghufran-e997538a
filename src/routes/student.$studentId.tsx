@@ -3,18 +3,25 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowRight, BookOpen, Info } from "lucide-react";
+import { ArrowRight, BookOpen, Info, Pencil, Trash2 } from "lucide-react";
 import { QuranProgressGrid, type RecitationLite } from "@/components/QuranProgressGrid";
 import { JuzProbeGrid, type ProbeLite } from "@/components/JuzProbeGrid";
 import { GRADE_LABELS, JUZ_30_SURAHS } from "@/lib/quran-data";
 import { NAWAWI_HADITHS } from "@/lib/hadith-data";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, canManageStudents } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/student/$studentId")({
   head: () => ({ meta: [{ title: "تسميعات الطالب" }] }),
@@ -28,6 +35,11 @@ interface StudentInfo {
   mother_name: string | null;
   grade_level: string | null;
   birth_year: number | null;
+  contact_phone: string | null;
+  father_phone: string | null;
+  mother_phone: string | null;
+  address: string | null;
+  father_job: string | null;
 }
 
 interface ProbeRow extends ProbeLite {
