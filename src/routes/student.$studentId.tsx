@@ -80,7 +80,17 @@ const POINT_SOURCE_LABELS: Record<string, string> = {
 function StudentView() {
   const { studentId } = Route.useParams();
   const router = useRouter();
-  const { session } = useAuth();
+  const { session, roles } = useAuth();
+  const canManage = canManageStudents(roles);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: "", nickname: "", father_name: "", mother_name: "",
+    grade_level: "", birth_year: "", contact_phone: "", father_phone: "",
+    mother_phone: "", address: "", father_job: "",
+  });
   const [activeTab, setActiveTab] = useState("recitations");
   useEffect(() => {
     const saved = sessionStorage.getItem(`student:tab:${studentId}`);
@@ -470,11 +480,75 @@ function StudentView() {
                 <InfoRow label="اسم الأم" value={info.mother_name} />
                 <InfoRow label="المرحلة الدراسية" value={info.grade_level} />
                 <InfoRow label="عام الميلاد" value={info.birth_year != null ? String(info.birth_year) : null} />
+                <InfoRow label="رقم التواصل" value={info.contact_phone} />
+                <InfoRow label="رقم الأب" value={info.father_phone} />
+                <InfoRow label="رقم الأم" value={info.mother_phone} />
+                <InfoRow label="عنوان السكن" value={info.address} />
+                <InfoRow label="عمل الأب" value={info.father_job} />
               </dl>
+              {canManage && (
+                <div className="mt-4 flex gap-2 border-t pt-3">
+                  <Button size="sm" variant="outline" onClick={startEdit}>
+                    <Pencil className="size-4" /> تعديل المعلومات
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                    <Trash2 className="size-4" /> حذف الطالب
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>تعديل معلومات الطالب</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <EditField label="اسم الطالب" value={editForm.full_name} onChange={(v) => setEditForm((f) => ({ ...f, full_name: v }))} />
+            <EditField label="كنية الطالب" value={editForm.nickname} onChange={(v) => setEditForm((f) => ({ ...f, nickname: v }))} />
+            <EditField label="اسم الأب" value={editForm.father_name} onChange={(v) => setEditForm((f) => ({ ...f, father_name: v }))} />
+            <EditField label="اسم الأم" value={editForm.mother_name} onChange={(v) => setEditForm((f) => ({ ...f, mother_name: v }))} />
+            <EditField label="المرحلة الدراسية" value={editForm.grade_level} onChange={(v) => setEditForm((f) => ({ ...f, grade_level: v }))} />
+            <EditField label="عام الميلاد" value={editForm.birth_year} onChange={(v) => setEditForm((f) => ({ ...f, birth_year: v.replace(/[^0-9]/g, "") }))} />
+            <EditField label="رقم التواصل" value={editForm.contact_phone} onChange={(v) => setEditForm((f) => ({ ...f, contact_phone: v }))} />
+            <EditField label="رقم الأب" value={editForm.father_phone} onChange={(v) => setEditForm((f) => ({ ...f, father_phone: v }))} />
+            <EditField label="رقم الأم" value={editForm.mother_phone} onChange={(v) => setEditForm((f) => ({ ...f, mother_phone: v }))} />
+            <EditField label="عنوان السكن" value={editForm.address} onChange={(v) => setEditForm((f) => ({ ...f, address: v }))} />
+            <EditField label="عمل الأب" value={editForm.father_job} onChange={(v) => setEditForm((f) => ({ ...f, father_job: v }))} />
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>إلغاء</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? "جاري الحفظ..." : "حفظ"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الطالب</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الطالب «{info?.full_name}» وجميع تسميعاته ونقاطه نهائياً. هل أنت متأكد؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "جاري الحذف..." : "حذف نهائي"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
