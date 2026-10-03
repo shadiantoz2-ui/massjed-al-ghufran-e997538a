@@ -68,6 +68,14 @@ interface StudentInfo {
   teacher_id: string | null;
 }
 
+const INFO_FIELDS: [keyof StudentInfo, string][] = [
+  ["full_name", "اسم الطالب"], ["nickname", "كنية الطالب"],
+  ["father_name", "اسم الأب"], ["mother_name", "اسم الأم"],
+  ["grade_level", "المرحلة الدراسية"], ["birth_year", "عام الميلاد"],
+  ["father_phone", "هاتف الأب"], ["mother_phone", "هاتف الأم"],
+  ["contact_phone", "رقم التواصل (واتساب)"], ["father_job", "عمل الأب"],
+  ["address", "العنوان"],
+];
 interface FullHadith {
   id: string;
   hadith_number: number;
@@ -146,6 +154,7 @@ function RecitePage() {
   // student info dialog
   const [infoOpen, setInfoOpen] = useState(false);
   const [info, setInfo] = useState<StudentInfo | null>(null);
+  const [infoEdit, setInfoEdit] = useState<StudentInfo | null>(null);
 
   // probe/hadith points input
   const [probePoints, setProbePoints] = useState<number | "">("");
@@ -186,9 +195,30 @@ function RecitePage() {
 
   async function openInfo() {
     setInfoOpen(true);
+    setInfoEdit(null);
     if (info) return;
     const { data } = await supabase.from("students").select("*").eq("id", studentId).maybeSingle();
     setInfo((data as StudentInfo) ?? null);
+  }
+
+  async function saveInfo() {
+    if (!infoEdit) return;
+    if (!infoEdit.full_name?.trim()) return toast.error("اسم الطالب مطلوب");
+    const { teacher_id: _t, ...rest } = infoEdit;
+    const { error } = await supabase.from("students").update(rest).eq("id", studentId);
+    if (error) return toast.error("تعذر الحفظ: " + error.message);
+    setInfo(infoEdit);
+    setInfoEdit(null);
+    toast.success("تم حفظ المعلومات");
+  }
+
+  async function deleteStudent() {
+    if (!confirm(`سيتم حذف الطالب «${info?.full_name}» وجميع تسميعاته ونقاطه نهائياً. هل أنت متأكد؟`)) return;
+    const { error } = await supabase.from("students").delete().eq("id", studentId);
+    if (error) return toast.error("تعذر حذف الطالب");
+    toast.success("تم حذف الطالب");
+    setInfoOpen(false);
+    router.history.back();
   }
 
   function openNew(prefill?: { kind: "page" | "surah"; page?: number; surah?: number }) {
@@ -1231,6 +1261,24 @@ function RecitePage() {
             <p className="py-6 text-center text-sm text-muted-foreground">جاري التحميل...</p>
           ) : (
             <div className="rounded-lg border bg-card p-4 text-sm">
+              {infoEdit ? (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {INFO_FIELDS.map(([k, label]) => (
+                    <div key={k} className="space-y-1">
+                      <Label className="text-xs">{label}</Label>
+                      <Input
+                        type={k === "birth_year" ? "number" : "text"}
+                        value={(infoEdit as any)[k] ?? ""}
+                        onChange={(e) => setInfoEdit({ ...infoEdit, [k]: k === "birth_year" ? (e.target.value ? Number(e.target.value) : null) : e.target.value })}
+                      />
+                    </div>
+                  ))}
+                  <div className="col-span-full mt-2 flex gap-2">
+                    <Button size="sm" onClick={saveInfo}>حفظ</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setInfoEdit(null)}>إلغاء</Button>
+                  </div>
+                </div>
+              ) : (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <InfoRow label="اسم الطالب" value={info.full_name} />
                 <InfoRow label="كنية الطالب" value={info.nickname} />
@@ -1244,6 +1292,17 @@ function RecitePage() {
                 <InfoRow label="عمل الأب" value={info.father_job} />
                 <InfoRow label="العنوان" value={info.address} full />
               </dl>
+              )}
+              {canEditAll && !infoEdit && (
+                <div className="mt-4 flex gap-2 border-t pt-3">
+                  <Button size="sm" variant="outline" onClick={() => setInfoEdit({ ...info })}>
+                    <Pencil className="size-4" /> تعديل المعلومات
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={deleteStudent}>
+                    <Trash2 className="size-4" /> حذف الطالب
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
