@@ -9,26 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as DashboardAttendanceRouteImport } from './routes/dashboard.attendance'
-import { Route as DashboardRegistrationsRouteImport } from './routes/dashboard.registrations'
-import { Route as DashboardStudentsRouteImport } from './routes/dashboard.students'
-import { Route as DashboardTeachersRouteImport } from './routes/dashboard.teachers'
 import { Route as StudentStudentIdRouteImport } from './routes/student.$studentId'
+import { Route as DashboardTeachersRouteImport } from './routes/dashboard.teachers'
+import { Route as DashboardStudentsRouteImport } from './routes/dashboard.students'
+import { Route as DashboardRegistrationsRouteImport } from './routes/dashboard.registrations'
+import { Route as DashboardAttendanceRouteImport } from './routes/dashboard.attendance'
 import { Route as DashboardReciteStudentIdRouteImport } from './routes/dashboard.recite.$studentId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -36,9 +31,14 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -46,14 +46,14 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAttendanceRoute = DashboardAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
-  getParentRoute: () => DashboardRoute,
+const StudentStudentIdRoute = StudentStudentIdRouteImport.update({
+  id: '/student/$studentId',
+  path: '/student/$studentId',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRegistrationsRoute = DashboardRegistrationsRouteImport.update({
-  id: '/registrations',
-  path: '/registrations',
+const DashboardTeachersRoute = DashboardTeachersRouteImport.update({
+  id: '/teachers',
+  path: '/teachers',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardStudentsRoute = DashboardStudentsRouteImport.update({
@@ -61,15 +61,15 @@ const DashboardStudentsRoute = DashboardStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardTeachersRoute = DashboardTeachersRouteImport.update({
-  id: '/teachers',
-  path: '/teachers',
+const DashboardRegistrationsRoute = DashboardRegistrationsRouteImport.update({
+  id: '/registrations',
+  path: '/registrations',
   getParentRoute: () => DashboardRoute,
 } as any)
-const StudentStudentIdRoute = StudentStudentIdRouteImport.update({
-  id: '/student/$studentId',
-  path: '/student/$studentId',
-  getParentRoute: () => rootRouteImport,
+const DashboardAttendanceRoute = DashboardAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardReciteStudentIdRoute =
   DashboardReciteStudentIdRouteImport.update({
@@ -168,18 +168,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -189,11 +182,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -203,18 +203,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/attendance': {
-      id: '/dashboard/attendance'
-      path: '/attendance'
-      fullPath: '/dashboard/attendance'
-      preLoaderRoute: typeof DashboardAttendanceRouteImport
-      parentRoute: typeof DashboardRoute
+    '/student/$studentId': {
+      id: '/student/$studentId'
+      path: '/student/$studentId'
+      fullPath: '/student/$studentId'
+      preLoaderRoute: typeof StudentStudentIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboard/registrations': {
-      id: '/dashboard/registrations'
-      path: '/registrations'
-      fullPath: '/dashboard/registrations'
-      preLoaderRoute: typeof DashboardRegistrationsRouteImport
+    '/dashboard/teachers': {
+      id: '/dashboard/teachers'
+      path: '/teachers'
+      fullPath: '/dashboard/teachers'
+      preLoaderRoute: typeof DashboardTeachersRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/students': {
@@ -224,19 +224,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStudentsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/teachers': {
-      id: '/dashboard/teachers'
-      path: '/teachers'
-      fullPath: '/dashboard/teachers'
-      preLoaderRoute: typeof DashboardTeachersRouteImport
+    '/dashboard/registrations': {
+      id: '/dashboard/registrations'
+      path: '/registrations'
+      fullPath: '/dashboard/registrations'
+      preLoaderRoute: typeof DashboardRegistrationsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/student/$studentId': {
-      id: '/student/$studentId'
-      path: '/student/$studentId'
-      fullPath: '/student/$studentId'
-      preLoaderRoute: typeof StudentStudentIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/dashboard/attendance': {
+      id: '/dashboard/attendance'
+      path: '/attendance'
+      fullPath: '/dashboard/attendance'
+      preLoaderRoute: typeof DashboardAttendanceRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/recite/$studentId': {
       id: '/dashboard/recite/$studentId'
