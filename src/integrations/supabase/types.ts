@@ -799,6 +799,7 @@ export type Database = {
         Args: { _student_id: string; _uid: string }
         Returns: boolean
       }
+      is_staff: { Args: { _uid: string }; Returns: boolean }
       list_courses: {
         Args: never
         Returns: {
