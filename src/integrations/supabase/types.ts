@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_conversations: {
+        Row: {
+          busy_until: string | null
+          generation: string
+          messages: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          busy_until?: string | null
+          generation?: string
+          messages?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          busy_until?: string | null
+          generation?: string
+          messages?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           current_academic_year: number
@@ -535,6 +559,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_student_statistics: {
+        Args: { _course?: string; _from?: string; _name?: string; _to?: string }
+        Returns: Json
+      }
       approve_student_registration: {
         Args: { _id: string; _teacher_id?: string }
         Returns: string

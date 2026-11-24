@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
+import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardAttendanceRouteImport } from './routes/dashboard.attendance'
 import { Route as DashboardRegistrationsRouteImport } from './routes/dashboard.registrations'
@@ -24,6 +27,10 @@ import { Route as DashboardReciteStudentIdRouteImport } from './routes/dashboard
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -39,6 +46,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiAssistantRoute = ApiAssistantRouteImport.update({
+  id: '/api/assistant',
+  path: '/api/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -83,6 +100,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/register': typeof RegisterRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/api/assistant': typeof ApiAssistantRoute
   '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
@@ -95,6 +114,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/register': typeof RegisterRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/api/assistant': typeof ApiAssistantRoute
   '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
@@ -106,9 +127,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/register': typeof RegisterRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
+  '/api/assistant': typeof ApiAssistantRoute
   '/dashboard/attendance': typeof DashboardAttendanceRoute
   '/dashboard/registrations': typeof DashboardRegistrationsRoute
   '/dashboard/students': typeof DashboardStudentsRoute
@@ -124,6 +148,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/register'
+    | '/assistant'
+    | '/api/assistant'
     | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
@@ -136,6 +162,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/register'
+    | '/assistant'
+    | '/api/assistant'
     | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
@@ -146,9 +174,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/auth'
     | '/dashboard'
     | '/register'
+    | '/_authenticated/assistant'
+    | '/api/assistant'
     | '/dashboard/attendance'
     | '/dashboard/registrations'
     | '/dashboard/students'
@@ -160,9 +191,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   RegisterRoute: typeof RegisterRoute
+  ApiAssistantRoute: typeof ApiAssistantRoute
   StudentStudentIdRoute: typeof StudentStudentIdRoute
 }
 
@@ -173,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -194,6 +234,20 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/assistant': {
+      id: '/api/assistant'
+      path: '/api/assistant'
+      fullPath: '/api/assistant'
+      preLoaderRoute: typeof ApiAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -248,6 +302,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 interface DashboardRouteChildren {
   DashboardAttendanceRoute: typeof DashboardAttendanceRoute
   DashboardRegistrationsRoute: typeof DashboardRegistrationsRoute
@@ -272,9 +337,11 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
   RegisterRoute: RegisterRoute,
+  ApiAssistantRoute: ApiAssistantRoute,
   StudentStudentIdRoute: StudentStudentIdRoute,
 }
 export const routeTree = rootRouteImport
