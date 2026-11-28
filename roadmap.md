@@ -4,5 +4,5 @@
 - [ ] Verify permissions, exact date-range counts, persistence, and mobile layout.
 
 # Database optimization
-- [ ] Measure recorded run credits and database load; inspect queries, indexes and table sizes.
-- [ ] Fix the biggest database cost drivers (indexes / query patterns) and verify.
+- [x] Measure recorded run credits and database load; inspect queries, indexes and table sizes.
+- [x] Fix the biggest database cost drivers (indexes / query patterns) and verify.

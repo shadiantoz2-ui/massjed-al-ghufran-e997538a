@@ -13,7 +13,7 @@ import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "
 import { downloadRtlXlsx } from "@/lib/xlsx-export";
 import { cn } from "@/lib/utils";
 import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
-import { cachedCourses, cachedCurrentCourse, invalidateCached } from "@/lib/reference-data";
+import { cachedCourses, cachedCurrentCourse, cachedRead, invalidateCached, STUDENTS_TTL } from "@/lib/reference-data";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
@@ -76,10 +76,12 @@ function Home() {
   useEffect(() => {
     (async () => {
       const tasks: PromiseLike<unknown>[] = [
-        supabase
-          .from("students")
-          .select("id", { count: "exact", head: true })
-          .then(({ count }) => setStudentsCount(count ?? 0)),
+        cachedRead<number>("students:count", STUDENTS_TTL, async () => {
+          const { count } = await supabase
+            .from("students")
+            .select("id", { count: "exact", head: true });
+          return count ?? 0;
+        }).then((c) => setStudentsCount(c)),
         loadCourse(),
       ];
       if (canExport || isHalaqah) tasks.push(loadCourses());
