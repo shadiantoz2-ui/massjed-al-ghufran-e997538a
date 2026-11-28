@@ -16,6 +16,7 @@ import {
 import { useAuth, canManageStudents } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { cachedRead, cachedTeachers, invalidateCached, STUDENTS_TTL } from "@/lib/reference-data";
 
 export const Route = createFileRoute("/dashboard/students")({
   head: () => ({ meta: [{ title: "إدارة الطلاب" }] }),
@@ -80,14 +81,18 @@ function StudentsPage() {
   const [form, setForm] = useState<Omit<Student, "id">>(EMPTY);
 
   async function load() {
-    let q = supabase.from("students").select("id, full_name, nickname, father_name, mother_name, father_phone, mother_phone, contact_phone, address, father_job, birth_year, grade_level, teacher_id").order("full_name");
-    if (isHalaqahOnly && user?.id) q = q.eq("teacher_id", user.id);
-    const [{ data }, { data: t }] = await Promise.all([
-      q,
-      supabase.rpc("list_teachers"),
+    const scope = isHalaqahOnly && user?.id ? user.id : "all";
+    const [data, t] = await Promise.all([
+      cachedRead<Student[]>(`students:list:${scope}`, STUDENTS_TTL, async () => {
+        let q = supabase.from("students").select("id, full_name, nickname, father_name, mother_name, father_phone, mother_phone, contact_phone, address, father_job, birth_year, grade_level, teacher_id").order("full_name");
+        if (isHalaqahOnly && user?.id) q = q.eq("teacher_id", user.id);
+        const { data } = await q;
+        return (data ?? []) as Student[];
+      }),
+      cachedTeachers(),
     ]);
-    setStudents((data ?? []) as Student[]);
-    setTeachers((t ?? []) as TeacherOpt[]);
+    setStudents(data);
+    setTeachers(t);
   }
   useEffect(() => { load(); }, [isHalaqahOnly, user?.id]);
 
@@ -154,6 +159,7 @@ function StudentsPage() {
       toast.success("تمت إضافة الطالب");
     }
     setOpen(false);
+    invalidateCached("students:");
     load();
   }
 
@@ -162,6 +168,7 @@ function StudentsPage() {
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("تم الحذف");
+    invalidateCached("students:");
     load();
   }
 

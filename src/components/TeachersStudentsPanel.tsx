@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ChevronDown, ChevronUp, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cachedRead, cachedTeachers, STUDENTS_TTL } from "@/lib/reference-data";
 
 type Teacher = { user_id: string; full_name: string };
 type Student = {
@@ -40,15 +41,18 @@ export function TeachersStudentsPanel({
 
   useEffect(() => {
     (async () => {
-      const [{ data: t }, { data: s }] = await Promise.all([
-        supabase.rpc("list_teachers"),
-        supabase
-          .from("students")
-          .select("id, full_name, father_name, nickname, grade_level, teacher_id")
-          .order("full_name"),
+      const [t, s] = await Promise.all([
+        cachedTeachers(),
+        cachedRead<Student[]>("students:panel", STUDENTS_TTL, async () => {
+          const { data } = await supabase
+            .from("students")
+            .select("id, full_name, father_name, nickname, grade_level, teacher_id")
+            .order("full_name");
+          return (data ?? []) as Student[];
+        }),
       ]);
-      setTeachers((t ?? []) as Teacher[]);
-      setStudents((s ?? []) as Student[]);
+      setTeachers(t);
+      setStudents(s);
       setLoading(false);
     })();
   }, []);

@@ -59,7 +59,7 @@ export async function handleAssistant(request: Request) {
         } else {
           const { data: statistics, error } = await db.rpc("admin_student_statistics", { ... (plan.from ? { _from: plan.from } : {}), ...(plan.to ? { _to: plan.to } : {}), _name: plan.name, ...(plan.courseId ? { _course: plan.courseId } : {}) });
           if (error) throw new Error("تعذر قراءة إحصاءات الطلاب");
-          const output = { from: plan.from, to: plan.to, students: statistics };
+          const output = { from: plan.from, to: plan.to, students: JSON.parse(JSON.stringify(statistics ?? [])) };
           assistant.parts.push({ type: "dynamic-tool", toolName: "student_statistics", toolCallId: crypto.randomUUID(), state: "output-available", input: plan, output });
           emit({ type: "stats", input: plan, output });
           const stream = await streamResponse({ model: "openai/gpt-6-astra", reasoning: { effort: "low" },

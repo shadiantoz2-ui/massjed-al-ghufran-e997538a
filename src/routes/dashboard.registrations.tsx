@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { Check, X, Trash2 } from "lucide-react";
+import { cachedTeachers, invalidateCached } from "@/lib/reference-data";
 
 export const Route = createFileRoute("/dashboard/registrations")({
   head: () => ({
@@ -61,15 +62,15 @@ function RegistrationsPage() {
   const [tab, setTab] = useState<"pending" | "all">("pending");
 
   const load = useCallback(async () => {
-    const [{ data }, { data: t }] = await Promise.all([
+    const [{ data }, t] = await Promise.all([
       supabase
         .from("student_registrations")
         .select("*")
         .order("created_at", { ascending: false }),
-      supabase.rpc("list_teachers"),
+      cachedTeachers(),
     ]);
     setRegs((data ?? []) as Reg[]);
-    setTeachers((t ?? []) as TeacherOpt[]);
+    setTeachers(t);
   }, []);
 
   useEffect(() => { if (allowed) load(); }, [allowed, load]);
@@ -83,6 +84,7 @@ function RegistrationsPage() {
     setBusyId(null);
     if (error) return toast.error(error.message);
     toast.success("تم قبول الطالب وإضافته لقائمة الطلاب");
+    invalidateCached("students:");
     load();
   }
 

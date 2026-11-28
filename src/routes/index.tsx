@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Search, LogIn } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { cachedCurrentCourse } from "@/lib/reference-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,8 +34,7 @@ function Index() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("get_current_course");
-      const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
+      const row = await cachedCurrentCourse();
       if (row) setCourse({ name: row.name, year: row.year });
     })();
   }, []);

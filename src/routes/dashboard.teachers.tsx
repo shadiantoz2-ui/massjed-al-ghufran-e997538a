@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, ShieldAlert, KeyRound, Pencil } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { resetTeacherPassword, createTeacherAccount, updateTeacherAccount, deleteTeacherAccount } from "@/lib/admin-users.functions";
+import { invalidateCached } from "@/lib/reference-data";
 
 export const Route = createFileRoute("/dashboard/teachers")({
   head: () => ({ meta: [{ title: "إدارة المعلمين" }] }),
@@ -63,6 +64,7 @@ function TeachersPage() {
     try {
       await deleteTeacherFn({ data: { user_id: t.user_id } });
       toast.success("تم حذف الحساب");
+      invalidateCached("teachers");
       load();
     } catch (err: any) {
       toast.error(err.message || "تعذر الحذف");
@@ -91,6 +93,7 @@ function TeachersPage() {
       await updateTeacherFn({ data: { user_id: editTarget.user_id, full_name: editName, email: editEmail } });
       toast.success("تم تحديث بيانات المعلم");
       setEditOpen(false);
+      invalidateCached("teachers");
       load();
     } catch (err: any) {
       toast.error(err.message || "تعذر التحديث");
@@ -148,6 +151,7 @@ function TeachersPage() {
       toast.success("تم إنشاء حساب المعلم");
       setOpen(false);
       setFullName(""); setEmail(""); setPassword(""); setRole("reciter");
+      invalidateCached("teachers");
       load();
     } catch (err: any) {
       toast.error(err.message || "خطأ");
@@ -163,6 +167,7 @@ function TeachersPage() {
       .from("user_roles").delete().eq("user_id", userId).eq("role", r as any);
     if (error) return toast.error(error.message);
     toast.success("تم");
+    invalidateCached("teachers");
     load();
   }
 
@@ -179,6 +184,7 @@ function TeachersPage() {
       .insert({ user_id: t.user_id, role: newRole as any });
     if (insErr) return toast.error(insErr.message);
     toast.success(`تم تعيين الدور: ${ROLE_LABELS[newRole]}`);
+    invalidateCached("teachers");
     load();
   }
 

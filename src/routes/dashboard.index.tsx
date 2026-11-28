@@ -13,6 +13,7 @@ import { GraduationCap, CalendarClock, Search, Pencil, Trash2, Download } from "
 import { downloadRtlXlsx } from "@/lib/xlsx-export";
 import { cn } from "@/lib/utils";
 import { TeachersStudentsPanel } from "@/components/TeachersStudentsPanel";
+import { cachedCourses, cachedCurrentCourse, invalidateCached } from "@/lib/reference-data";
 
 type CourseRow = { id: string; name: string; year: number; is_current: boolean; started_at: string; ended_at: string | null };
 
@@ -65,14 +66,11 @@ function Home() {
   const isHalaqah = roles.includes("halaqah");
 
   async function loadCourse() {
-    const { data } = await supabase.rpc("get_current_course");
-    const row = Array.isArray(data) && data.length ? (data[0] as any) : null;
-    setCourse(row);
+    setCourse(await cachedCurrentCourse());
   }
 
   async function loadCourses() {
-    const { data } = await supabase.rpc("list_courses" as any);
-    setCourses((data ?? []) as CourseRow[]);
+    setCourses((await cachedCourses()) as CourseRow[]);
   }
 
   useEffect(() => {
@@ -128,6 +126,7 @@ function Home() {
     toast.success("تم بدء الدورة الجديدة");
     setNewOpen(false);
     setNewName("");
+    invalidateCached("course");
     await loadCourse();
     if (isAdmin) await loadCourses();
   }
@@ -148,6 +147,7 @@ function Home() {
     if (error) return toast.error(error.message);
     toast.success("تم تحديث الدورة");
     setEditCourse(null);
+    invalidateCached("course");
     await loadCourse();
     await loadCourses();
   }
@@ -157,6 +157,7 @@ function Home() {
     const { error } = await supabase.rpc("delete_course" as any, { _course_id: c.id });
     if (error) return toast.error(error.message);
     toast.success("تم حذف الدورة");
+    invalidateCached("course");
     await loadCourse();
     await loadCourses();
   }
